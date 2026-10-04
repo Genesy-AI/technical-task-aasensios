@@ -4,8 +4,8 @@
 
 - [ ] [security] pin exact deps (no carets) - dependabot already scans
 - [ ] [security] remove axios - fetch web native api should be enough today
-- [ ] [product] replace favicon and page title
-- [ ] [product] fix icon alignment of Enrich > "Verify email" option
+- [x] [product] replace favicon and page title
+- [x] [product] fix icon alignment of Enrich > "Verify email" option
 - [ ] [product] move email status from inline emoji to dedicated column
 - [ ] [product] replace country codes with proper names
 - [ ] [product] improve layout adaptability - table shuold be wider when zooming out
