@@ -184,10 +184,11 @@ export const CsvImportModal: FC<CsvImportModalProps> = ({ isOpen, onClose }) => 
       onClick={handleBackdropClick}
     >
       <div
-        className="bg-card rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+        // Only the preview table scrolls; header, summary and footer stay put
+        className="bg-card rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="px-6 py-4 border-b border-border">
+        <div className="px-6 py-4 border-b border-border shrink-0">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-medium text-foreground">Import Leads from CSV</h3>
             <button
@@ -202,7 +203,7 @@ export const CsvImportModal: FC<CsvImportModalProps> = ({ isOpen, onClose }) => 
           </div>
         </div>
 
-        <div className="px-6 py-4">
+        <div className="px-6 py-4 flex flex-col flex-1 min-h-0">
           {csvData.length === 0 ? (
             <div
               className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
@@ -261,8 +262,8 @@ export const CsvImportModal: FC<CsvImportModalProps> = ({ isOpen, onClose }) => 
               )}
             </div>
           ) : (
-            <div className="space-y-4">
-              <div className="bg-muted/50 rounded-lg p-4">
+            <div className="flex flex-col flex-1 min-h-0 gap-4">
+              <div className="bg-muted/50 rounded-lg p-4 shrink-0">
                 <h4 className="text-sm font-medium text-foreground mb-3">Import Summary</h4>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="bg-card rounded p-3 text-center">
@@ -284,7 +285,7 @@ export const CsvImportModal: FC<CsvImportModalProps> = ({ isOpen, onClose }) => 
                 </div>
               </div>
 
-              <div className="border border-border rounded-lg max-h-96 overflow-auto">
+              <div className="border border-border rounded-lg min-h-0 overflow-auto">
                 <table className="min-w-full divide-y divide-border">
                   <thead className="bg-muted/50 sticky top-0">
                     <tr>
@@ -337,7 +338,7 @@ export const CsvImportModal: FC<CsvImportModalProps> = ({ isOpen, onClose }) => 
         </div>
 
         {csvData.length > 0 && (
-          <div className="px-6 py-4 border-t border-border flex justify-between">
+          <div className="px-6 py-4 border-t border-border flex justify-between shrink-0">
             <div className="flex space-x-3">
               <Button variant="outline" onClick={() => setCsvData([])}>
                 Clear Data

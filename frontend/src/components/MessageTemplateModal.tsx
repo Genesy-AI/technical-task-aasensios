@@ -20,6 +20,9 @@ const matchesQuery = (field: LeadField, query: string) => {
   return field.key.toLowerCase().includes(q) || field.label.toLowerCase().includes(q)
 }
 
+// Survives closing the modal (e.g. a stray click outside) and page reloads, until messages are generated
+const DRAFT_STORAGE_KEY = 'message-template-draft'
+
 interface MessageTemplateModalProps {
   isOpen: boolean
   onClose: () => void
@@ -33,7 +36,7 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
 }) => {
   const selectedLeadIds = selectedLeads.map((lead) => lead.id)
   const selectedLeadsCount = selectedLeads.length
-  const [template, setTemplate] = useState('')
+  const [template, setTemplate] = useState(() => localStorage.getItem(DRAFT_STORAGE_KEY) ?? '')
   const [generationResult, setGenerationResult] = useState<{
     success: boolean
     generatedCount: number
@@ -65,6 +68,7 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
         toast.success(message)
         onClose()
         setTemplate('')
+        localStorage.removeItem(DRAFT_STORAGE_KEY)
         setGenerationResult(null)
       } else {
         const successMessage =
@@ -98,7 +102,6 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
   const handleClose = useCallback(() => {
     if (!generateMessagesMutation.isPending) {
       onClose()
-      setTemplate('')
       setGenerationResult(null)
     }
   }, [generateMessagesMutation.isPending, onClose])
@@ -167,6 +170,8 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
 
   const updateTemplate = (value: string, caretPosition: number) => {
     setTemplate(value)
+    if (value) localStorage.setItem(DRAFT_STORAGE_KEY, value)
+    else localStorage.removeItem(DRAFT_STORAGE_KEY)
     setCaret(caretPosition)
     setActiveSuggestion(0)
     setSuggestionsDismissed(false)
@@ -376,7 +381,9 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
                   onClick={syncCaret}
                   onBlur={() => setSuggestionsDismissed(true)}
                   placeholder="Enter your message template here. Type { to insert a lead field.&#10;&#10;Example: Hi {firstName}, I noticed you work at {companyName} as a {jobTitle}. Would you be interested in..."
-                  className="w-full h-32 px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                  rows={6}
+                  // Grows with its content, so only the modal body scrolls (no scrollbar inside a scrollbar)
+                  className="w-full min-h-32 field-sizing-content px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
                   role="combobox"
                   aria-autocomplete="list"
                   aria-expanded={suggestions.length > 0}

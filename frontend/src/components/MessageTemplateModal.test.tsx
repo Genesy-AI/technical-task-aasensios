@@ -68,6 +68,7 @@ describe('MessageTemplateModal', () => {
   afterEach(() => {
     cleanup()
     vi.clearAllMocks()
+    localStorage.clear()
   })
 
   it('suggests matching fields after typing { and inserts the chosen one with Enter', async () => {
@@ -205,6 +206,24 @@ describe('MessageTemplateModal', () => {
     fireEvent.blur(search, { relatedTarget: textarea() })
 
     expect(screen.queryByRole('listbox', { name: /insert field/i })).not.toBeInTheDocument()
+  })
+
+  it('keeps the draft when the modal is closed without generating', async () => {
+    const onClose = vi.fn()
+    const { unmount } = render(
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+        <MessageTemplateModal isOpen onClose={onClose} selectedLeads={[ada]} />
+      </QueryClientProvider>
+    )
+    await fieldsLoaded()
+    type('Hi {firstName}, about your role')
+
+    fireEvent.click(screen.getByRole('button', { name: /cancel/i }))
+    expect(onClose).toHaveBeenCalled()
+    unmount()
+
+    renderModal()
+    expect(textarea().value).toBe('Hi {firstName}, about your role')
   })
 
   it('warns which fields are missing for some of the selected leads', async () => {

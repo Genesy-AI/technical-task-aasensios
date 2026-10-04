@@ -149,6 +149,72 @@ test.describe('message generation', () => {
   })
 })
 
+test.describe('dialog scrolling', () => {
+  test.use({ viewport: { width: 1280, height: 640 } })
+
+  test('a long CSV preview scrolls inside the table only', async ({ page, api }) => {
+    api.seed([makeLead(1, 'Ada', 'Lovelace')])
+    await page.goto('/')
+    await page.getByRole('button', { name: 'Import CSV' }).click()
+    const rows = Array.from(
+      { length: 60 },
+      (_, index) => `First${index},Last${index},person${index}@example.com`
+    )
+    await page.locator('input[type=file]').setInputFiles({
+      name: 'many.csv',
+      mimeType: 'text/csv',
+      buffer: Buffer.from(['firstName,lastName,email', ...rows].join('\n')),
+    })
+    await expect(page.getByText('Import Summary')).toBeVisible()
+
+    const scrollers = await page.evaluate(() =>
+      [...document.querySelectorAll('body *')]
+        .filter(
+          (el) =>
+            el.scrollHeight > el.clientHeight + 1 && /(auto|scroll)/.test(getComputedStyle(el).overflowY)
+        )
+        .map((el) => el.tagName)
+    )
+    expect(scrollers).toEqual(['DIV'])
+    await expect(page.getByRole('button', { name: 'Import 60 Valid Leads' })).toBeInViewport()
+  })
+
+  test('a long template grows the textarea instead of scrolling it', async ({ page, api }) => {
+    api.seed([makeLead(1, 'Ada', 'Lovelace')])
+    await page.goto('/')
+    await page.getByRole('checkbox', { name: 'Select Ada Lovelace' }).click()
+    await page.getByRole('button', { name: 'Generate Messages' }).click()
+
+    const template = page.getByRole('combobox', { name: 'Message Template' })
+    await template.fill(Array.from({ length: 30 }, (_, index) => `Line ${index} for {firstName}`).join('\n'))
+
+    const textareaScrolls = await template.evaluate((el) => el.scrollHeight > el.clientHeight + 1)
+    expect(textareaScrolls).toBe(false)
+    await expect(page.getByRole('button', { name: 'Cancel' })).toBeInViewport()
+  })
+})
+
+test.describe('message draft', () => {
+  test('survives closing the dialog and reloading the page', async ({ page, api }) => {
+    api.seed([makeLead(1, 'Ada', 'Lovelace')])
+    await page.goto('/')
+    await page.getByRole('checkbox', { name: 'Select Ada Lovelace' }).click()
+    await page.getByRole('button', { name: 'Generate Messages' }).click()
+    await page.getByRole('combobox', { name: 'Message Template' }).fill('Hi {firstName}, a quick question')
+
+    // A stray click on the backdrop closes the dialog
+    await page.mouse.click(5, 5)
+    await expect(page.getByText('Generate Messages for 1 Lead')).toBeHidden()
+
+    await page.reload()
+    await page.getByRole('checkbox', { name: 'Select Ada Lovelace' }).click()
+    await page.getByRole('button', { name: 'Generate Messages' }).click()
+    await expect(page.getByRole('combobox', { name: 'Message Template' })).toHaveValue(
+      'Hi {firstName}, a quick question'
+    )
+  })
+})
+
 test.describe('CSV import', () => {
   test('previews the file and imports the valid leads', async ({ page, api }) => {
     api.seed([makeLead(1, 'Ada', 'Lovelace')])
