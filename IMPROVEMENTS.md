@@ -2,8 +2,8 @@
 
 ## In this repo - TinyEnginy app
 
-- [ ] [security] pin exact deps (no carets) - dependabot already scans
-- [ ] [security] remove axios - fetch web native api should be enough today
+- [x] [security] pin exact deps (no carets) - dependabot already scans
+- [x] [security] remove axios - fetch web native api should be enough today
 - [x] [product] replace favicon and page title
 - [x] [product] fix icon alignment of Enrich > "Verify email" option
 - [x] [product] move "Generate Messages" out of the Enrich menu - it writes outreach copy from a template in a modal, unlike the fire-and-forget data lookups in Enrich
