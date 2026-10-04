@@ -1,5 +1,6 @@
 import { FC } from 'react'
 import type { ColumnDef } from '@tanstack/react-table'
+import { IconCircleCheck, IconCircleX, IconHelpCircle } from '@tabler/icons-react'
 import { DataTableColumnHeader } from '@/components/data-table/data-table-column-header'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -43,13 +44,27 @@ const formatDate = (dateString: string) =>
   })
 
 const EmailStatusBadge: FC<{ status: EmailStatus }> = ({ status }) => {
-  if (status === 'unverified') {
-    return <span className="text-muted-foreground">Not verified</span>
+  if (status === 'verified') {
+    return (
+      <Badge className="bg-green-100 text-green-800">
+        <IconCircleCheck data-icon="inline-start" aria-hidden />
+        Verified
+      </Badge>
+    )
   }
-  return status === 'verified' ? (
-    <Badge className="bg-green-100 text-green-800">Verified</Badge>
-  ) : (
-    <Badge variant="destructive">Invalid</Badge>
+  if (status === 'invalid') {
+    return (
+      <Badge variant="destructive">
+        <IconCircleX data-icon="inline-start" aria-hidden />
+        Invalid
+      </Badge>
+    )
+  }
+  return (
+    <Badge variant="secondary" className="text-muted-foreground">
+      <IconHelpCircle data-icon="inline-start" aria-hidden />
+      Not verified
+    </Badge>
   )
 }
 
