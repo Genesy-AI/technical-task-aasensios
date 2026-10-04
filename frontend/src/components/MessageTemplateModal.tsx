@@ -199,9 +199,17 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
   const insertFromPicker = (field: LeadField) => {
     insertField(field, pickerInsertRange.current.start, pickerInsertRange.current.end)
     setIsFieldPickerOpen(false)
+    setPickerQuery('')
   }
 
   const handlePickerKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!isFieldPickerOpen) {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault()
+        openFieldPicker()
+      }
+      return
+    }
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
       e.preventDefault()
       if (pickerOptions.length === 0) return
@@ -217,6 +225,7 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
       e.preventDefault()
       e.stopPropagation()
       setIsFieldPickerOpen(false)
+      setPickerQuery('')
       textareaRef.current?.focus()
     }
   }
@@ -271,7 +280,7 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
 
           <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
             {/* Pads the scroll area so focus rings aren't clipped */}
-            <div className="flex-1 min-h-0 overflow-y-auto space-y-6 -mx-1 px-1">
+            <div className="flex-1 min-h-0 overflow-y-auto space-y-6 -mx-1 px-1 -mt-3 pt-3">
             <div>
               <label htmlFor="message-template" className="block text-sm font-medium text-gray-700 mb-2">
                 Message Template
@@ -281,46 +290,37 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
                   className="absolute -top-8 right-0"
                   // Close when focus leaves the picker (click outside, Tab away)
                   onBlur={(e) => {
-                    if (!e.currentTarget.contains(e.relatedTarget)) setIsFieldPickerOpen(false)
+                    if (e.currentTarget.contains(e.relatedTarget)) return
+                    setIsFieldPickerOpen(false)
+                    setPickerQuery('')
                   }}
                 >
-                  <button
-                    type="button"
-                    onClick={() => (isFieldPickerOpen ? setIsFieldPickerOpen(false) : openFieldPicker())}
+                  <input
+                    type="text"
+                    value={pickerQuery}
+                    onFocus={openFieldPicker}
+                    onChange={(e) => {
+                      if (!isFieldPickerOpen) openFieldPicker()
+                      setPickerQuery(e.target.value)
+                      setActivePickerOption(0)
+                    }}
+                    onKeyDown={handlePickerKeyDown}
                     disabled={templatableFields.length === 0}
-                    aria-haspopup="listbox"
+                    placeholder="Insert field…"
+                    aria-label="Search fields"
+                    role="combobox"
+                    aria-autocomplete="list"
                     aria-expanded={isFieldPickerOpen}
-                    className="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-800 bg-blue-100 rounded hover:bg-blue-200 disabled:opacity-50 transition-colors"
-                  >
-                    Insert field
-                    <svg className="ml-1 h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
+                    aria-controls="field-picker-options"
+                    aria-activedescendant={
+                      isFieldPickerOpen && pickerOptions[activePickerOption]
+                        ? `field-picker-${pickerOptions[activePickerOption].key}`
+                        : undefined
+                    }
+                    className="w-44 px-2 py-1 text-xs border border-gray-300 rounded placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50"
+                  />
                   {isFieldPickerOpen && (
                     <div className="absolute right-0 mt-1 w-64 bg-white rounded-md shadow-lg z-10 border border-gray-200">
-                      <div className="p-2 border-b border-gray-100">
-                        <input
-                          type="text"
-                          autoFocus
-                          value={pickerQuery}
-                          onChange={(e) => {
-                            setPickerQuery(e.target.value)
-                            setActivePickerOption(0)
-                          }}
-                          onKeyDown={handlePickerKeyDown}
-                          placeholder="Search fields…"
-                          aria-label="Search fields"
-                          role="combobox"
-                          aria-autocomplete="list"
-                          aria-expanded="true"
-                          aria-controls="field-picker-options"
-                          aria-activedescendant={
-                            pickerOptions[activePickerOption] ? `field-picker-${pickerOptions[activePickerOption].key}` : undefined
-                          }
-                          className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        />
-                      </div>
                       <div
                         id="field-picker-options"
                         role="listbox"

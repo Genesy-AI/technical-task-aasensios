@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { api } from '../api'
 import { LeadsGetManyOutput } from '../api/types/leads/getMany'
@@ -47,9 +47,9 @@ const renderModal = (selectedLeads = [ada, bob]) =>
 
 // The field picker enables once the registry has loaded
 const fieldsLoaded = async () => {
-  const button = await screen.findByRole('button', { name: /insert field/i })
-  await waitFor(() => expect(button).toBeEnabled())
-  return button
+  const search = await screen.findByRole('combobox', { name: /search fields/i })
+  await waitFor(() => expect(search).toBeEnabled())
+  return search
 }
 
 const textarea = () => screen.getByLabelText(/message template/i) as HTMLTextAreaElement
@@ -102,15 +102,18 @@ describe('MessageTemplateModal', () => {
   })
 
   const openPicker = async () => {
-    fireEvent.click(await fieldsLoaded())
-    return screen.getByRole('combobox', { name: /search fields/i })
+    const search = await fieldsLoaded()
+    act(() => search.focus())
+    return search
   }
 
-  it('opens the picker with a focused search box and every field grouped by category', async () => {
+  it('lists every field grouped by category when the search box is focused', async () => {
     renderModal()
-    const search = await openPicker()
+    const search = await fieldsLoaded()
+    expect(screen.queryByRole('listbox', { name: /insert field/i })).not.toBeInTheDocument()
 
-    expect(search).toHaveFocus()
+    act(() => search.focus())
+
     const picker = screen.getByRole('listbox', { name: /insert field/i })
     expect(within(picker).getAllByRole('group').map((group) => group.getAttribute('aria-label'))).toEqual([
       'Contact',
@@ -156,6 +159,18 @@ describe('MessageTemplateModal', () => {
 
     expect(textarea().value).toBe('Hi {lastName}, welcome')
     expect(screen.queryByRole('listbox', { name: /insert field/i })).not.toBeInTheDocument()
+    expect(search).toHaveValue('')
+  })
+
+  it('opens the options when typing straight into the closed search box', async () => {
+    renderModal()
+    const search = await openPicker()
+    fireEvent.keyDown(search, { key: 'Escape' })
+    expect(screen.queryByRole('listbox', { name: /insert field/i })).not.toBeInTheDocument()
+
+    fireEvent.change(search, { target: { value: 'comp' } })
+
+    expect(screen.getByRole('option', { selected: true })).toHaveTextContent('Company')
   })
 
   it('inserts a field when clicked', async () => {
