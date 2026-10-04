@@ -1,5 +1,8 @@
 <p align="center">
-  <img src="./frontend/public/enginy_brand_filled.svg" width="256" height="128" alt="Enginy logo">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./frontend/public/enginy_brand_filled_white.svg">
+    <img src="./frontend/public/enginy_brand_filled.svg" width="256" height="128" alt="Enginy logo">
+  </picture>
 </p>
 
 ## Overview
