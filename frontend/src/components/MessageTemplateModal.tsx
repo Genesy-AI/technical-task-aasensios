@@ -14,6 +14,11 @@ const GROUP_LABELS: Record<LeadFieldGroup, string> = {
   social: 'Social',
 }
 
+const matchesQuery = (field: LeadField, query: string) => {
+  const q = query.trim().toLowerCase()
+  return field.key.toLowerCase().includes(q) || field.label.toLowerCase().includes(q)
+}
+
 interface MessageTemplateModalProps {
   isOpen: boolean
   onClose: () => void
@@ -37,6 +42,10 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
   const [activeSuggestion, setActiveSuggestion] = useState(0)
   const [suggestionsDismissed, setSuggestionsDismissed] = useState(false)
   const [isFieldPickerOpen, setIsFieldPickerOpen] = useState(false)
+  const [pickerQuery, setPickerQuery] = useState('')
+  const [activePickerOption, setActivePickerOption] = useState(0)
+  // Where to insert from the picker: focus moves to its search box, so remember the textarea selection
+  const pickerInsertRange = useRef({ start: 0, end: 0 })
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const leadFields = useLeadFields()
   const queryClient = useQueryClient()
@@ -126,21 +135,23 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
     [leadFields.data]
   )
 
-  const fieldGroups = useMemo(
+  const pickerGroups = useMemo(
     () =>
       (Object.keys(GROUP_LABELS) as LeadFieldGroup[])
-        .map((group) => ({ group, fields: templatableFields.filter((field) => field.group === group) }))
+        .map((group) => ({
+          group,
+          fields: templatableFields.filter((field) => field.group === group && matchesQuery(field, pickerQuery)),
+        }))
         .filter(({ fields }) => fields.length > 0),
-    [templatableFields]
+    [templatableFields, pickerQuery]
   )
+  // Keyboard navigation runs over the visible options in display order, across groups
+  const pickerOptions = useMemo(() => pickerGroups.flatMap(({ fields }) => fields), [pickerGroups])
 
   const autocomplete = suggestionsDismissed ? null : getAutocompleteMatch(template, caret)
   const suggestions = useMemo(() => {
     if (!autocomplete) return []
-    const query = autocomplete.query.toLowerCase()
-    return templatableFields.filter(
-      (field) => field.key.toLowerCase().includes(query) || field.label.toLowerCase().includes(query)
-    )
+    return templatableFields.filter((field) => matchesQuery(field, autocomplete.query))
   }, [autocomplete, templatableFields])
 
   const unknownFields = useMemo(
@@ -174,10 +185,40 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
     }, 0)
   }
 
-  const insertFromPicker = (field: LeadField) => {
+  const openFieldPicker = () => {
     const textarea = textareaRef.current
-    insertField(field, textarea?.selectionStart ?? template.length, textarea?.selectionEnd ?? template.length)
+    pickerInsertRange.current = {
+      start: textarea?.selectionStart ?? template.length,
+      end: textarea?.selectionEnd ?? template.length,
+    }
+    setPickerQuery('')
+    setActivePickerOption(0)
+    setIsFieldPickerOpen(true)
+  }
+
+  const insertFromPicker = (field: LeadField) => {
+    insertField(field, pickerInsertRange.current.start, pickerInsertRange.current.end)
     setIsFieldPickerOpen(false)
+  }
+
+  const handlePickerKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault()
+      if (pickerOptions.length === 0) return
+      const step = e.key === 'ArrowDown' ? 1 : -1
+      setActivePickerOption((index) => (index + step + pickerOptions.length) % pickerOptions.length)
+    } else if (e.key === 'Enter') {
+      // Don't submit the form
+      e.preventDefault()
+      const field = pickerOptions[activePickerOption]
+      if (field) insertFromPicker(field)
+    } else if (e.key === 'Escape') {
+      // Close the picker, not the modal
+      e.preventDefault()
+      e.stopPropagation()
+      setIsFieldPickerOpen(false)
+      textareaRef.current?.focus()
+    }
   }
 
   const handleTemplateKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -242,9 +283,9 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
                 >
                   <button
                     type="button"
-                    onClick={() => setIsFieldPickerOpen((open) => !open)}
+                    onClick={() => (isFieldPickerOpen ? setIsFieldPickerOpen(false) : openFieldPicker())}
                     disabled={templatableFields.length === 0}
-                    aria-haspopup="menu"
+                    aria-haspopup="listbox"
                     aria-expanded={isFieldPickerOpen}
                     className="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-800 bg-blue-100 rounded hover:bg-blue-200 disabled:opacity-50 transition-colors"
                   >
@@ -254,29 +295,70 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
                     </svg>
                   </button>
                   {isFieldPickerOpen && (
-                    <div
-                      role="menu"
-                      className="absolute right-0 mt-1 w-56 max-h-72 overflow-y-auto bg-white rounded-md shadow-lg z-10 border border-gray-200 py-1"
-                    >
-                      {fieldGroups.map(({ group, fields }) => (
-                        <div key={group} role="group" aria-label={GROUP_LABELS[group]}>
-                          <div className="px-3 pt-2 pb-1 text-xs font-semibold text-gray-500 uppercase">
-                            {GROUP_LABELS[group]}
+                    <div className="absolute right-0 mt-1 w-64 bg-white rounded-md shadow-lg z-10 border border-gray-200">
+                      <div className="p-2 border-b border-gray-100">
+                        <input
+                          type="text"
+                          autoFocus
+                          value={pickerQuery}
+                          onChange={(e) => {
+                            setPickerQuery(e.target.value)
+                            setActivePickerOption(0)
+                          }}
+                          onKeyDown={handlePickerKeyDown}
+                          placeholder="Search fields…"
+                          aria-label="Search fields"
+                          role="combobox"
+                          aria-autocomplete="list"
+                          aria-expanded="true"
+                          aria-controls="field-picker-options"
+                          aria-activedescendant={
+                            pickerOptions[activePickerOption] ? `field-picker-${pickerOptions[activePickerOption].key}` : undefined
+                          }
+                          className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                      </div>
+                      <div
+                        id="field-picker-options"
+                        role="listbox"
+                        aria-label="Insert field"
+                        className="max-h-64 overflow-y-auto py-1"
+                      >
+                        {pickerGroups.map(({ group, fields }) => (
+                          <div key={group} role="group" aria-label={GROUP_LABELS[group]}>
+                            <div className="px-3 pt-2 pb-1 text-xs font-semibold text-gray-500 uppercase" aria-hidden="true">
+                              {GROUP_LABELS[group]}
+                            </div>
+                            {fields.map((field) => {
+                              const isActive = pickerOptions[activePickerOption]?.key === field.key
+                              return (
+                                <div
+                                  key={field.key}
+                                  id={`field-picker-${field.key}`}
+                                  ref={isActive ? (el) => el?.scrollIntoView?.({ block: 'nearest' }) : undefined}
+                                  role="option"
+                                  aria-selected={isActive}
+                                  // mousedown so the search box doesn't blur (and close the picker) first
+                                  onMouseDown={(e) => {
+                                    e.preventDefault()
+                                    insertFromPicker(field)
+                                  }}
+                                  onMouseEnter={() => setActivePickerOption(pickerOptions.indexOf(field))}
+                                  className={`flex w-full items-center justify-between px-3 py-1.5 text-sm cursor-pointer ${
+                                    isActive ? 'bg-blue-50 text-blue-900' : 'text-gray-700'
+                                  }`}
+                                >
+                                  {field.label}
+                                  <span className="text-xs text-gray-400 font-mono">{`{${field.key}}`}</span>
+                                </div>
+                              )
+                            })}
                           </div>
-                          {fields.map((field) => (
-                            <button
-                              key={field.key}
-                              type="button"
-                              role="menuitem"
-                              onClick={() => insertFromPicker(field)}
-                              className="flex w-full items-center justify-between px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100"
-                            >
-                              {field.label}
-                              <span className="text-xs text-gray-400 font-mono">{`{${field.key}}`}</span>
-                            </button>
-                          ))}
-                        </div>
-                      ))}
+                        ))}
+                        {pickerOptions.length === 0 && (
+                          <div className="px-3 py-2 text-sm text-gray-500">No matching fields</div>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -310,6 +392,7 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
                       <li
                         key={field.key}
                         id={`field-suggestion-${index}`}
+                        ref={index === activeSuggestion ? (el) => el?.scrollIntoView?.({ block: 'nearest' }) : undefined}
                         role="option"
                         aria-selected={index === activeSuggestion}
                         // mousedown so the textarea doesn't blur (and close the list) before the click lands

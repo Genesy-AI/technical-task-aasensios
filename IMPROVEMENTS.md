@@ -17,6 +17,7 @@
 - [ ] [product] optimize performance
 - [ ] [product] improve observability
 - [ ] [product] prevent losing the draft message when clicking away by mistake
+- [ ] [product] prevent double scrollbars in modals, like the generate messages one
 - [ ] [chore] bump prisma - error in @backend/prisma/schema.prisma
 - [ ] [chore] bump pnpm
 - [ ] [chore] bump nodejs

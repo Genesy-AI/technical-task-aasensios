@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { api } from '../api'
 import { LeadsGetManyOutput } from '../api/types/leads/getMany'
@@ -101,32 +101,95 @@ describe('MessageTemplateModal', () => {
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
   })
 
-  it('inserts fields from a picker grouped by category', async () => {
-    renderModal()
+  const openPicker = async () => {
     fireEvent.click(await fieldsLoaded())
+    return screen.getByRole('combobox', { name: /search fields/i })
+  }
 
-    expect(screen.getAllByRole('group').map((group) => group.getAttribute('aria-label'))).toEqual([
+  it('opens the picker with a focused search box and every field grouped by category', async () => {
+    renderModal()
+    const search = await openPicker()
+
+    expect(search).toHaveFocus()
+    const picker = screen.getByRole('listbox', { name: /insert field/i })
+    expect(within(picker).getAllByRole('group').map((group) => group.getAttribute('aria-label'))).toEqual([
       'Contact',
       'Company',
       'Social',
     ])
-    expect(screen.getByRole('group', { name: 'Company' })).toHaveTextContent('Years at company')
+    expect(within(picker).getAllByRole('option')).toHaveLength(leadFieldsFixture.length)
+  })
 
-    fireEvent.click(screen.getByRole('menuitem', { name: /linkedin/i }))
-    expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+  it('narrows the options as you type, by label or placeholder', async () => {
+    renderModal()
+    const search = await openPicker()
+    const picker = screen.getByRole('listbox', { name: /insert field/i })
+
+    fireEvent.change(search, { target: { value: 'link' } })
+    expect(within(picker).getAllByRole('option').map((option) => option.textContent)).toEqual([
+      'LinkedIn{linkedinUrl}',
+    ])
+    expect(within(picker).getAllByRole('group').map((group) => group.getAttribute('aria-label'))).toEqual(['Social'])
+
+    fireEvent.change(search, { target: { value: 'countryco' } })
+    expect(within(picker).getByRole('option')).toHaveTextContent('Country')
+
+    fireEvent.change(search, { target: { value: 'gender' } })
+    expect(within(picker).queryByRole('option')).not.toBeInTheDocument()
+    expect(within(picker).getByText('No matching fields')).toBeInTheDocument()
+  })
+
+  it('inserts the highlighted match at the cursor with the keyboard', async () => {
+    renderModal()
+    await fieldsLoaded()
+    type('Hi , welcome')
+    textarea().setSelectionRange(3, 3)
+
+    const search = await openPicker()
+    fireEvent.change(search, { target: { value: 'name' } })
+    expect(screen.getAllByRole('option', { selected: true })).toHaveLength(1)
+    expect(screen.getByRole('option', { selected: true })).toHaveTextContent('First name')
+
+    fireEvent.keyDown(search, { key: 'ArrowDown' })
+    expect(screen.getByRole('option', { selected: true })).toHaveTextContent('Last name')
+    fireEvent.keyDown(search, { key: 'Enter' })
+
+    expect(textarea().value).toBe('Hi {lastName}, welcome')
+    expect(screen.queryByRole('listbox', { name: /insert field/i })).not.toBeInTheDocument()
+  })
+
+  it('inserts a field when clicked', async () => {
+    renderModal()
+    await openPicker()
+
+    fireEvent.mouseDown(screen.getByRole('option', { name: /linkedin/i }))
 
     expect(textarea().value).toBe('{linkedinUrl}')
+    expect(screen.queryByRole('listbox', { name: /insert field/i })).not.toBeInTheDocument()
+  })
+
+  it('closes the picker, but not the modal, with Escape', async () => {
+    const onClose = vi.fn()
+    render(
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+        <MessageTemplateModal isOpen onClose={onClose} selectedLeads={[ada]} />
+      </QueryClientProvider>
+    )
+    const search = await openPicker()
+
+    fireEvent.keyDown(search, { key: 'Escape' })
+
+    expect(screen.queryByRole('listbox', { name: /insert field/i })).not.toBeInTheDocument()
+    expect(onClose).not.toHaveBeenCalled()
   })
 
   it('closes the picker when focus moves elsewhere', async () => {
     renderModal()
-    const button = await fieldsLoaded()
-    fireEvent.click(button)
-    expect(screen.getByRole('menu')).toBeInTheDocument()
+    const search = await openPicker()
 
-    fireEvent.blur(button, { relatedTarget: textarea() })
+    fireEvent.blur(search, { relatedTarget: textarea() })
 
-    expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+    expect(screen.queryByRole('listbox', { name: /insert field/i })).not.toBeInTheDocument()
   })
 
   it('warns which fields are missing for some of the selected leads', async () => {
