@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { NuqsAdapter } from 'nuqs/adapters/react'
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing'
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import toast, { Toaster } from 'react-hot-toast'
@@ -166,7 +167,11 @@ describe('LeadsList new lead fields', () => {
 
   it('shows years at company and links to the LinkedIn profile', async () => {
     vi.mocked(api.leads.getMany).mockResolvedValue([
-      { ...makeLead(1, 'John', 'Doe'), yearsAtCompany: 0, linkedinUrl: 'https://www.linkedin.com/in/john-doe' },
+      {
+        ...makeLead(1, 'John', 'Doe'),
+        yearsAtCompany: 0,
+        linkedinUrl: 'https://www.linkedin.com/in/john-doe',
+      },
       makeLead(2, 'Jane', 'Smith'),
     ])
     renderLeadsList()
@@ -219,7 +224,12 @@ describe('LeadsList phone enrichment', () => {
 
   it('shows the phone with its source, or the enrichment status', async () => {
     vi.mocked(api.leads.getMany).mockResolvedValue([
-      { ...makeLead(1, 'John', 'Doe'), phone: '8577732848', phoneSource: 'orion', phoneEnrichmentStatus: 'found' },
+      {
+        ...makeLead(1, 'John', 'Doe'),
+        phone: '8577732848',
+        phoneSource: 'orion',
+        phoneEnrichmentStatus: 'found',
+      },
       { ...makeLead(2, 'Jane', 'Smith'), phone: '+1-280-754-0462', phoneSource: 'csv' },
       { ...makeLead(3, 'Ann', 'Lee'), phoneEnrichmentStatus: 'not_found' },
       { ...makeLead(4, 'Bob', 'Ray'), phoneEnrichmentStatus: 'failed' },
@@ -260,11 +270,48 @@ describe('LeadsList phone enrichment', () => {
     vi.mocked(api.leads.getMany)
       .mockResolvedValueOnce([{ ...makeLead(1, 'John', 'Doe'), phoneEnrichmentStatus: 'running' }])
       .mockResolvedValue([
-        { ...makeLead(1, 'John', 'Doe'), phone: '2630110166', phoneSource: 'astra', phoneEnrichmentStatus: 'found' },
+        {
+          ...makeLead(1, 'John', 'Doe'),
+          phone: '2630110166',
+          phoneSource: 'astra',
+          phoneEnrichmentStatus: 'found',
+        },
       ])
     renderLeadsList()
 
     expect(await screen.findByText('Searching…')).toBeInTheDocument()
     expect(await screen.findByText('2630110166', {}, { timeout: 4000 })).toBeInTheDocument()
+  })
+})
+
+describe('LeadsList pagination', () => {
+  afterEach(() => {
+    cleanup()
+    vi.clearAllMocks()
+    window.history.replaceState(null, '', '/')
+  })
+
+  it('moves to the next page and stays there', async () => {
+    vi.mocked(api.leads.getMany).mockResolvedValue(
+      Array.from({ length: 25 }, (_, index) => makeLead(index + 1, `Lead${index + 1}`, 'Test'))
+    )
+    // The URL-backed adapter, so page changes go through window.location like in the app
+    render(
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+        <NuqsAdapter>
+          <LeadsList />
+        </NuqsAdapter>
+      </QueryClientProvider>
+    )
+
+    expect(
+      await screen.findByText('Page 1 of 2', { normalizer: (text) => text.replace(/\s+/g, ' ') })
+    ).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /go to next page/i }))
+
+    await waitFor(() => expect(window.location.search).toContain('page=2'))
+    await new Promise((resolve) => setTimeout(resolve, 100))
+    expect(window.location.search).toContain('page=2')
+    expect(screen.getAllByRole('checkbox', { name: /^select lead/i })).toHaveLength(5)
   })
 })

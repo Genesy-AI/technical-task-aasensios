@@ -1,9 +1,54 @@
 import * as React from 'react'
 import { cn } from '@/lib/utils'
 
+const SCROLL_FADE_WIDTH = '2.5rem'
+
+// Tracks whether there is hidden content to either side, so the edges can fade out as a scroll hint
+function useHorizontalOverflow(containerRef: React.RefObject<HTMLDivElement | null>) {
+  const [overflow, setOverflow] = React.useState({ start: false, end: false })
+
+  React.useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+
+    const update = () => {
+      const { scrollLeft, scrollWidth, clientWidth } = container
+      const start = scrollLeft > 1
+      const end = scrollLeft + clientWidth < scrollWidth - 1
+      setOverflow((prev) => (prev.start === start && prev.end === end ? prev : { start, end }))
+    }
+
+    update()
+    container.addEventListener('scroll', update, { passive: true })
+    // Column visibility and data changes resize the table without resizing the container
+    const resizeObserver = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(update)
+    resizeObserver?.observe(container)
+    if (container.firstElementChild) resizeObserver?.observe(container.firstElementChild)
+
+    return () => {
+      container.removeEventListener('scroll', update)
+      resizeObserver?.disconnect()
+    }
+  }, [containerRef])
+
+  return overflow
+}
+
 function Table({ className, ...props }: React.ComponentProps<'table'>) {
+  const containerRef = React.useRef<HTMLDivElement>(null)
+  const overflow = useHorizontalOverflow(containerRef)
+  const maskImage =
+    overflow.start || overflow.end
+      ? `linear-gradient(to right, transparent, #000 ${overflow.start ? SCROLL_FADE_WIDTH : '0px'}, #000 calc(100% - ${overflow.end ? SCROLL_FADE_WIDTH : '0px'}), transparent)`
+      : undefined
+
   return (
-    <div data-slot="table-container" className="relative w-full overflow-x-auto">
+    <div
+      ref={containerRef}
+      data-slot="table-container"
+      className="relative w-full overflow-x-auto"
+      style={{ maskImage, WebkitMaskImage: maskImage }}
+    >
       <table data-slot="table" className={cn('w-full caption-bottom text-sm', className)} {...props} />
     </div>
   )

@@ -38,6 +38,9 @@ export const LeadsList: FC = () => {
     columns,
     mode: 'client',
     getRowId: (lead: Lead) => String(lead.id),
+    // useDataTable rebuilds its filters from the URL on every URL change, so TanStack's auto-reset would
+    // send each page change back to page 1. The hook already resets the page itself when filters change.
+    autoResetPageIndex: false,
     initialState: {
       sorting: [{ id: 'createdAt', desc: true }],
       pagination: { pageIndex: 0, pageSize: 20 },
