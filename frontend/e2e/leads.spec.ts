@@ -86,6 +86,39 @@ test.describe('selection actions', () => {
     await expect(page.getByRole('checkbox', { name: 'Select Ada Lovelace' })).not.toBeChecked()
   })
 
+  test('select-all asks whether to select the current page or every lead', async ({ page, api }) => {
+    api.seed(fifteenLeads())
+    await page.goto('/')
+    const selectAll = page.getByRole('checkbox', { name: 'Select all leads' })
+    const selection = page.locator('[data-slot=action-bar-selection]')
+
+    await selectAll.click()
+    await page.getByRole('button', { name: 'This page (10)' }).click()
+    await expect(selection).toContainText('10 selected')
+    // Some leads selected: the header shows a dash
+    await expect(selectAll).toHaveAttribute('aria-checked', 'mixed')
+
+    // With a selection, the header checkbox clears it
+    await selectAll.click()
+    await expect(selection).toBeHidden()
+    await expect(selectAll).toHaveAttribute('aria-checked', 'false')
+
+    await selectAll.click()
+    await page.getByRole('button', { name: 'All 15 leads' }).click()
+    await expect(selection).toContainText('15 selected')
+    await expect(selectAll).toHaveAttribute('aria-checked', 'true')
+  })
+
+  test('select-all selects straight away when every lead fits on one page', async ({ page, api }) => {
+    api.seed([makeLead(1, 'Ada', 'Lovelace'), makeLead(2, 'Grace', 'Hopper')])
+    await page.goto('/')
+
+    await page.getByRole('checkbox', { name: 'Select all leads' }).click()
+
+    await expect(page.locator('[data-slot=action-bar-selection]')).toContainText('2 selected')
+    await expect(page.getByRole('dialog')).toBeHidden()
+  })
+
   test('verifies emails and reports invalid ones', async ({ page, api }) => {
     api.seed([
       makeLead(1, 'Ada', 'Lovelace'),

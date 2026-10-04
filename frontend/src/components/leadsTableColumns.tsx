@@ -4,6 +4,7 @@ import { IconCircleCheck, IconCircleX, IconHelpCircle } from '@tabler/icons-reac
 import { DataTableColumnHeader } from '@/components/data-table/data-table-column-header'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
+import { SelectAllCheckbox } from './SelectAllCheckbox'
 import type { DataTableFeatures } from '@/lib/data-table-features'
 import type { FilterOption } from '@/lib/data-table-types'
 import { countryName } from '../utils/countryCodes'
@@ -127,14 +128,7 @@ export const getLeadsTableColumns = (
 ): ColumnDef<DataTableFeatures, Lead>[] => [
   {
     id: 'select',
-    header: ({ table }) => (
-      <Checkbox
-        aria-label="Select all leads"
-        checked={table.getIsAllRowsSelected()}
-        indeterminate={table.getIsSomeRowsSelected()}
-        onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
-      />
-    ),
+    header: ({ table }) => <SelectAllCheckbox table={table} />,
     cell: ({ row }) => (
       <Checkbox
         aria-label={`Select ${fullName(row.original)}`}
