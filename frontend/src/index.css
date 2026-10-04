@@ -122,7 +122,9 @@
     @apply border-border outline-ring/50;
     }
   body {
-    @apply bg-background text-foreground;
+    /* Tabular figures: every digit has the same width, so numbers line up in columns and
+       counters like "Page 1 of 3" don't shift as they change */
+    @apply bg-background text-foreground tabular-nums;
     }
   html {
     @apply font-sans;

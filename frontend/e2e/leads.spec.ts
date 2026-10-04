@@ -26,6 +26,17 @@ test.describe('leads table', () => {
     expect((await nextPage.boundingBox())!.y).toBe(footerTop)
   })
 
+  test('uses tabular figures so numbers keep their width', async ({ page, api }) => {
+    api.seed(fifteenLeads())
+    await page.goto('/')
+
+    const pageCount = page.getByText('Page 1 of 2')
+    await expect(pageCount).toHaveCSS('font-variant-numeric', 'tabular-nums')
+    const width = (await pageCount.boundingBox())!.width
+    await page.getByRole('button', { name: 'Go to next page' }).click()
+    expect((await page.getByText('Page 2 of 2').boundingBox())!.width).toBe(width)
+  })
+
   test('filters leads by name from the Filter menu', async ({ page, api }) => {
     api.seed([makeLead(1, 'Ada', 'Lovelace'), makeLead(2, 'Grace', 'Hopper'), makeLead(3, 'Alan', 'Turing')])
     await page.goto('/')
