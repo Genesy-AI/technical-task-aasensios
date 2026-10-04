@@ -20,6 +20,8 @@
 - [x] [product] Import CSV next to the table's View button, Leads heading above the card
 - [x] [product] tablecn advanced Sort and Filter menus - column/operator/value filter rows joined with and/or, both with a count badge
 - [x] [product] default to 10 rows per page
+- [x] [product] select-all asks whether to select the current page or every lead, and its checkbox shows the right state
+- [x] [product] light/dark/system theme buttons with tooltips; grid and eye icons for Import CSV and View
 - [x] [product] tabular figures app-wide - numbers line up and counters like "Page 1 of 3" keep their width when paging
 - [x] [product] dark mode - follows the OS until toggled from the header, remembered across visits, applied before first paint
 - [x] [product] move email status from inline emoji to dedicated column

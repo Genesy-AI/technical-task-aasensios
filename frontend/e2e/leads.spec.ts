@@ -309,5 +309,9 @@ test.describe('theme', () => {
     await system.click()
     await page.emulateMedia({ colorScheme: 'light' })
     await expect(html).not.toHaveClass(/dark/)
+    // Clicking dismisses the tooltip, so hover afresh
+    await page.mouse.move(0, 0)
+    await system.hover()
+    await expect(page.getByText('System (follows your OS)')).toBeVisible()
   })
 })

@@ -18,7 +18,7 @@ import {
   FacetedList,
   FacetedTrigger,
 } from '@/components/ui/faceted'
-import { IconSettings } from '@tabler/icons-react'
+import { IconEye } from '@tabler/icons-react'
 
 interface DataTableViewOptionsProps<TData extends RowData>
   extends React.ComponentProps<typeof FacetedContent> {
@@ -58,7 +58,7 @@ export function DataTableViewOptions<TData extends RowData>({
               />
             }
           >
-            <IconSettings className="text-muted-foreground" />
+            <IconEye className="text-muted-foreground" />
             View
           </FacetedTrigger>
           <FacetedContent align="center" className={cn('w-44', className)} {...props}>

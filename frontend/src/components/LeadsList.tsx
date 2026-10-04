@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useSelector } from '@tanstack/react-store'
 import { FC, useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
-import { IconCloudUpload } from '@tabler/icons-react'
+import { IconTable } from '@tabler/icons-react'
 import { DataTable } from '@/components/data-table/data-table'
 import { DataTableAdvancedToolbar } from '@/components/data-table/data-table-advanced-toolbar'
 import { DataTableFilterMenu } from '@/components/data-table/data-table-filter-menu'
@@ -160,7 +160,7 @@ export const LeadsList: FC = () => {
 
   const importCsvButton = (
     <Button variant="outline" onClick={() => setIsImportModalOpen(true)}>
-      <IconCloudUpload data-icon="inline-start" />
+      <IconTable data-icon="inline-start" />
       Import CSV
     </Button>
   )
