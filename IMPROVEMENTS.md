@@ -22,7 +22,7 @@
 - [ ] [chore] bump typescript - tsgo is much more faster than tsc
 - [ ] [chore] bump react
 - [ ] [refactor] move enginy_brand_filled.svg inside frontend
-- [ ] [refactor] share common typescript types between backend and frontend
+- [ ] [refactor] share common typescript types between backend and frontend - root pnpm workspace with a shared package (lead types, lead field registry) instead of serving the registry over `GET /leads/fields`
 - [ ] [dx] display black/white logo in readme depending on github light/dark mode
 - [ ] [dx] migrate to vite+
 - [ ] [dx] fix frontend lint - ESLint 9 ignores the legacy `.eslintrc.cjs`, so `pnpm lint` fails; migrate to flat config (`eslint.config.js`) and drop the removed `--ext` flag

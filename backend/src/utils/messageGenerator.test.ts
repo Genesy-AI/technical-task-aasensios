@@ -57,6 +57,16 @@ describe('generateMessageFromTemplate', () => {
       expect(result).toBe('Can I call you at 8577732848?')
     })
 
+    it('should replace numeric fields, including zero', () => {
+      expect(generateMessageFromTemplate('{yearsAtCompany} years', { ...fullLead, yearsAtCompany: 4 })).toBe('4 years')
+      expect(generateMessageFromTemplate('{yearsAtCompany} years', { ...fullLead, yearsAtCompany: 0 })).toBe('0 years')
+    })
+
+    it('should replace the LinkedIn URL', () => {
+      const lead = { ...fullLead, linkedinUrl: 'https://www.linkedin.com/in/john-doe' }
+      expect(generateMessageFromTemplate('See {linkedinUrl}', lead)).toBe('See https://www.linkedin.com/in/john-doe')
+    })
+
     it('should handle template with no field placeholders', () => {
       const template = 'This is a static message with no placeholders.'
       const result = generateMessageFromTemplate(template, fullLead)

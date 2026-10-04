@@ -6,6 +6,7 @@ import { generateMessageFromTemplate } from './utils/messageGenerator'
 import { verifyLeadEmails } from './utils/emailVerifier'
 import { startPhoneEnrichment } from './utils/phoneEnrichmentStarter'
 import { normalizeCountryCode } from './utils/countryCodes'
+import { LEAD_FIELDS, sanitizeOptionalFields, type DroppedValue } from './leadFields'
 import { runTemporalWorker } from './worker'
 const app = express()
 app.use(express.json())
@@ -38,6 +39,11 @@ app.post('/leads', async (req: Request, res: Response) => {
     },
   })
   res.json(lead)
+})
+
+// Registered before /leads/:id so "fields" isn't read as a lead id
+app.get('/leads/fields', (req: Request, res: Response) => {
+  res.json(LEAD_FIELDS)
 })
 
 app.get('/leads/:id', async (req: Request, res: Response) => {
@@ -221,10 +227,11 @@ app.post('/leads/bulk', async (req: Request, res: Response) => {
     let importedCount = 0
     const errors: Array<{ lead: any; error: string }> = []
     const droppedCountryCodes: Array<{ lead: any; countryCode: unknown }> = []
+    const droppedValues: Array<{ lead: any } & DroppedValue> = []
 
     for (const lead of uniqueLeads) {
       const { countryCode, dropped } = normalizeCountryCode(lead.countryCode)
-      const phone = typeof lead.phone === 'string' && lead.phone.trim() ? lead.phone.trim() : null
+      const optional = sanitizeOptionalFields(lead)
       try {
         await prisma.lead.create({
           data: {
@@ -234,13 +241,15 @@ app.post('/leads/bulk', async (req: Request, res: Response) => {
             jobTitle: lead.jobTitle ? lead.jobTitle.trim() : null,
             countryCode,
             companyName: lead.companyName ? lead.companyName.trim() : null,
-            ...(phone && { phone, phoneSource: 'csv' }),
+            ...optional.data,
+            phoneSource: optional.data.phone ? 'csv' : null,
           },
         })
         importedCount++
         if (dropped) {
           droppedCountryCodes.push({ lead, countryCode: lead.countryCode })
         }
+        droppedValues.push(...optional.dropped.map((d) => ({ lead, ...d })))
       } catch (error) {
         errors.push({
           lead: lead,
@@ -256,6 +265,7 @@ app.post('/leads/bulk', async (req: Request, res: Response) => {
       invalidLeads: leads.length - validLeads.length,
       errors,
       droppedCountryCodes,
+      droppedValues,
     })
   } catch (error) {
     console.error('Error importing leads:', error)

@@ -24,4 +24,6 @@ model lead {
   phoneSource String?
   // pending | running | found | not_found | failed
   phoneEnrichmentStatus String?
+  yearsAtCompany Int?
+  linkedinUrl String?
 }
