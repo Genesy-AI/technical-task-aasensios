@@ -6,6 +6,7 @@
 - [ ] [security] remove axios - fetch web native api should be enough today
 - [x] [product] replace favicon and page title
 - [x] [product] fix icon alignment of Enrich > "Verify email" option
+- [x] [product] move "Generate Messages" out of the Enrich menu into its own button - it writes outreach copy from a template in a modal, unlike the fire-and-forget data lookups in Enrich
 - [x] [product] move email status from inline emoji to dedicated column
 - [x] [product] replace country codes with proper names
 - [x] [product] improve layout adaptability - table shuold be wider when zooming out

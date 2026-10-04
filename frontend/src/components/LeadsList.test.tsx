@@ -317,3 +317,27 @@ describe('LeadsList pagination', () => {
     expect(document.querySelectorAll('tbody tr')).toHaveLength(20)
   })
 })
+
+describe('LeadsList message generation', () => {
+  afterEach(() => {
+    cleanup()
+    vi.clearAllMocks()
+  })
+
+  it('opens the template modal from its own button, not the Enrich menu', async () => {
+    vi.mocked(api.leads.getMany).mockResolvedValue([makeLead(1, 'John', 'Doe'), makeLead(2, 'Jane', 'Smith')])
+    renderLeadsList()
+
+    await screen.findByText('jane.smith@example.com')
+    const generateButton = screen.getByRole('button', { name: /^generate messages$/i })
+    expect(generateButton).toBeDisabled()
+
+    fireEvent.click(screen.getAllByRole('checkbox')[1])
+    fireEvent.click(screen.getByRole('button', { name: /enrich/i }))
+    expect(screen.getByRole('button', { name: /verify email/i })).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: /^generate messages$/i })).toHaveLength(1)
+
+    fireEvent.click(generateButton)
+    expect(await screen.findByText('Generate Messages for 1 Lead')).toBeInTheDocument()
+  })
+})
