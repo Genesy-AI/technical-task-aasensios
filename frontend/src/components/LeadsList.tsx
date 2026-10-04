@@ -181,7 +181,7 @@ export const LeadsList: FC = () => {
   return (
     <div>
       <h2 className="mb-4 text-lg font-semibold text-foreground">Leads</h2>
-      <div className="bg-card rounded-lg border border-border p-4">
+      <div className="bg-card rounded-xl border border-border p-4">
         {leads.isError ? (
           <div className="text-center py-12">
             <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-lg p-6">

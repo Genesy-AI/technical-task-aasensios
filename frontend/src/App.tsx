@@ -4,7 +4,7 @@ import { ThemeToggle } from './components/ThemeToggle'
 function App() {
   return (
     <div className="min-h-screen bg-muted/50 text-foreground">
-      <header className="bg-card shadow-sm border-b border-border">
+      <header className="bg-card border-b border-border">
         <div className="px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">

@@ -15,9 +15,8 @@ import {
   ActionBarClose,
   ActionBarGroup,
   ActionBarItem,
-  ActionBarSelection,
-  ActionBarSeparator,
 } from '@/components/ui/action-bar'
+import { buttonVariants } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +24,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { cn } from '@/lib/utils'
 
 type LeadsActionBarProps = {
   // Where the bar renders inline, in place of the table toolbar
@@ -54,6 +54,8 @@ const Action: FC<{
   <ActionBarItem
     variant={variant}
     size="default"
+    // ActionBarItem makes the group a single Tab stop (arrows move within it); let Tab reach every action
+    tabIndex={0}
     disabled={disabled}
     onClick={onClick}
     onSelect={keepSelection}
@@ -94,22 +96,36 @@ export const LeadsActionBar: FC<LeadsActionBarProps> = ({
         if (isEnrichMenuOpen) event.preventDefault()
       }}
     >
-      <ActionBarSelection className="whitespace-nowrap ps-1.5">
+      <div className="flex h-8 items-center gap-1 rounded-lg border border-border bg-background ps-2.5 pe-1 text-sm font-medium tabular-nums whitespace-nowrap dark:border-input dark:bg-input/30">
         {selectedCount} selected
-        <ActionBarSeparator />
         <TooltipProvider delay={300}>
           <Tooltip>
-            <TooltipTrigger render={<ActionBarClose aria-label="Clear selection" />}>
+            <TooltipTrigger
+              render={
+                <ActionBarClose
+                  aria-label="Clear selection"
+                  // Concentric with the h-8 rounded-lg box around it
+                  className={cn(buttonVariants({ variant: 'ghost', size: 'icon-xs' }), 'rounded-sm opacity-100')}
+                />
+              }
+            >
               <IconX />
             </TooltipTrigger>
             <TooltipContent>Clear selection</TooltipContent>
           </Tooltip>
         </TooltipProvider>
-      </ActionBarSelection>
+      </div>
       <ActionBarGroup className="ms-auto">
         <DropdownMenu open={isEnrichMenuOpen} onOpenChange={setIsEnrichMenuOpen}>
           <DropdownMenuTrigger
-            render={<ActionBarItem variant="brand-secondary" size="default" onSelect={keepSelection} />}
+            render={
+              <ActionBarItem
+                variant="brand-secondary"
+                size="default"
+                tabIndex={0}
+                onSelect={keepSelection}
+              />
+            }
           >
             {isVerifyingEmails || isFindingPhones ? <Spinner /> : <IconBolt />}
             Enrich

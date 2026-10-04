@@ -253,7 +253,7 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
     >
       <div
         // Fixed height so the preview, warnings and results appearing don't resize the modal
-        className="bg-card rounded-lg shadow-xl max-w-2xl w-full mx-4 h-[min(90vh,36rem)] flex flex-col"
+        className="bg-card rounded-xl shadow-xl max-w-2xl w-full mx-4 h-[min(90vh,36rem)] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-6 flex flex-col flex-1 min-h-0">
@@ -300,7 +300,7 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
                   placeholder="Enter your message template here. Type { to insert a lead field.&#10;&#10;Example: Hi {firstName}, I noticed you work at {companyName} as a {jobTitle}. Would you be interested in..."
                   rows={6}
                   // Grows with its content, so only the modal body scrolls (no scrollbar inside a scrollbar)
-                  className="block w-full min-h-32 field-sizing-content px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-3 focus:ring-ring/50 focus:border-ring resize-none"
+                  className="block w-full min-h-32 field-sizing-content px-3 py-2 border border-input rounded-lg focus:outline-none focus:ring-3 focus:ring-ring/50 focus:border-ring resize-none"
                   role="combobox"
                   aria-autocomplete="list"
                   aria-expanded={suggestions.length > 0}
@@ -314,7 +314,7 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
                     id="field-suggestions"
                     role="listbox"
                     aria-label="Field suggestions"
-                    className="absolute left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-card rounded-md shadow-lg z-10 border border-border py-1"
+                    className="absolute left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-card rounded-lg shadow-lg z-10 border border-border py-1"
                   >
                     {suggestions.map((field, index) => (
                       <li
@@ -377,7 +377,7 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
                   className="h-8 w-48 px-2.5 text-sm bg-transparent border border-input rounded-lg placeholder:text-muted-foreground focus:outline-none focus:ring-3 focus:ring-ring/50 focus:border-ring disabled:opacity-50"
                 />
                 {isFieldPickerOpen && (
-                  <div className="mt-1 w-64 bg-card rounded-md shadow-lg border border-border">
+                  <div className="mt-1 w-64 bg-card rounded-lg shadow-lg border border-border">
                     <div
                       id="field-picker-options"
                       role="listbox"
@@ -428,14 +428,14 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
                 </ul>
               )}
               {template.trim() && previewLead && (
-                <section aria-label="Preview" className="mt-5 rounded-md border border-border bg-muted/50 p-3">
+                <section aria-label="Preview" className="mt-5 rounded-lg border border-border bg-muted/50 p-3">
                   <h3 className="text-xs font-medium text-muted-foreground mb-1">
                     Preview — {`${previewLead.firstName} ${previewLead.lastName || ''}`.trim()}
                   </h3>
                   <p className="text-sm text-foreground whitespace-pre-wrap">
                     {renderPreview(template, previewLead).map((segment, index) =>
                       segment.missing ? (
-                        <mark key={index} className="bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 rounded px-0.5">
+                        <mark key={index} className="bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 rounded-sm px-0.5">
                           {segment.text}
                         </mark>
                       ) : (

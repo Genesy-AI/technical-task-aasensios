@@ -1,7 +1,7 @@
 import { FC } from 'react'
 import type { ColumnDef } from '@tanstack/react-table'
-import { IconCircleCheck, IconCircleX, IconHelpCircle } from '@tabler/icons-react'
 import { DataTableColumnHeader } from '@/components/data-table/data-table-column-header'
+import { IconCheck, IconX, IconQuestionMark } from '@tabler/icons-react'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { SelectAllCheckbox } from './SelectAllCheckbox'
@@ -44,26 +44,29 @@ const formatDate = (dateString: string) =>
     day: 'numeric',
   })
 
+// Badge shrinks icons to 12px, too small next to its text; tone them down like icons in buttons
+const statusBadgeIcon = '[&>svg]:size-3.5! [&>svg]:opacity-70'
+
 const EmailStatusBadge: FC<{ status: EmailStatus }> = ({ status }) => {
   if (status === 'verified') {
     return (
-      <Badge className="bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300">
-        <IconCircleCheck data-icon="inline-start" aria-hidden />
+      <Badge className={`${statusBadgeIcon} bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300`}>
+        <IconCheck data-icon="inline-start" aria-hidden />
         Verified
       </Badge>
     )
   }
   if (status === 'invalid') {
     return (
-      <Badge variant="destructive">
-        <IconCircleX data-icon="inline-start" aria-hidden />
+      <Badge variant="destructive" className={statusBadgeIcon}>
+        <IconX data-icon="inline-start" aria-hidden />
         Invalid
       </Badge>
     )
   }
   return (
-    <Badge variant="secondary" className="text-muted-foreground">
-      <IconHelpCircle data-icon="inline-start" aria-hidden />
+    <Badge variant="secondary" className={`${statusBadgeIcon} text-muted-foreground`}>
+      <IconQuestionMark data-icon="inline-start" aria-hidden />
       Not verified
     </Badge>
   )

@@ -186,7 +186,7 @@ export const CsvImportModal: FC<CsvImportModalProps> = ({ isOpen, onClose }) => 
     >
       <div
         // Only the preview table scrolls; header, summary and footer stay put
-        className="bg-card rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] flex flex-col"
+        className="bg-card rounded-xl shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="px-6 py-4 border-b border-border shrink-0">
@@ -275,19 +275,19 @@ export const CsvImportModal: FC<CsvImportModalProps> = ({ isOpen, onClose }) => 
               <div className="bg-muted/50 rounded-lg p-4 shrink-0">
                 <h4 className="text-sm font-medium text-foreground mb-3">Import summary</h4>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="bg-card rounded p-3 text-center">
+                  <div className="bg-card rounded-md p-3 text-center">
                     <div className="text-lg font-semibold text-foreground">{stats.total}</div>
                     <div className="text-xs text-muted-foreground">Total rows</div>
                   </div>
-                  <div className="bg-card rounded p-3 text-center">
+                  <div className="bg-card rounded-md p-3 text-center">
                     <div className="text-lg font-semibold text-green-600 dark:text-green-400">{stats.valid}</div>
                     <div className="text-xs text-muted-foreground">Valid leads</div>
                   </div>
-                  <div className="bg-card rounded p-3 text-center">
+                  <div className="bg-card rounded-md p-3 text-center">
                     <div className="text-lg font-semibold text-red-600 dark:text-red-400">{stats.invalid}</div>
                     <div className="text-xs text-muted-foreground">Invalid leads</div>
                   </div>
-                  <div className="bg-card rounded p-3 text-center">
+                  <div className="bg-card rounded-md p-3 text-center">
                     <div className="text-lg font-semibold text-yellow-600 dark:text-yellow-400">{stats.duplicatesInCsv}</div>
                     <div className="text-xs text-muted-foreground">Duplicates in CSV</div>
                   </div>
