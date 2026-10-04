@@ -13,6 +13,7 @@
 - [ ] [product] push enrichment progress via SSE/websocket instead of polling the leads table
 - [ ] [product] normalize phone numbers to E.164 (providers return bare numbers; needs a reliable country source)
 - [ ] [product] add a companyWebsite field so Orion works for free-mail leads
+- [ ] [product] provider rate limits - per-provider task queues + worker `maxTaskQueueActivitiesPerSecond` once providers publish limits
 - [ ] [product] optimize performance
 - [ ] [product] improve observability
 - [ ] [chore] bump prisma - error in @backend/prisma/schema.prisma
