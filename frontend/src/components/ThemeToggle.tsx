@@ -33,7 +33,7 @@ export const ThemeToggle: FC = () => {
                   />
                 }
               >
-                <Icon />
+                <Icon className={cn(isActive && 'text-foreground')} />
               </TooltipTrigger>
               <TooltipContent>{tooltip}</TooltipContent>
             </Tooltip>

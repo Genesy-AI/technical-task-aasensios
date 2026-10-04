@@ -3,17 +3,12 @@ import { createPortal } from 'react-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { api } from '../api'
-import { LeadField, LeadFieldGroup } from '../api/types/leads/getFields'
+import { LeadField } from '../api/types/leads/getFields'
 import { LeadsGetManyOutput } from '../api/types/leads/getMany'
 import { useLeadFields } from '../hooks/useLeadFields'
 import { findMissingFields, findUnknownFields, getAutocompleteMatch, renderPreview } from '../utils/messageTemplate'
 import { Button } from '@/components/ui/button'
-
-const GROUP_LABELS: Record<LeadFieldGroup, string> = {
-  contact: 'Contact',
-  company: 'Company',
-  social: 'Social',
-}
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 const matchesQuery = (field: LeadField, query: string) => {
   const q = query.trim().toLowerCase()
@@ -139,18 +134,10 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
     [leadFields.data]
   )
 
-  const pickerGroups = useMemo(
-    () =>
-      (Object.keys(GROUP_LABELS) as LeadFieldGroup[])
-        .map((group) => ({
-          group,
-          fields: templatableFields.filter((field) => field.group === group && matchesQuery(field, pickerQuery)),
-        }))
-        .filter(({ fields }) => fields.length > 0),
+  const pickerOptions = useMemo(
+    () => templatableFields.filter((field) => matchesQuery(field, pickerQuery)),
     [templatableFields, pickerQuery]
   )
-  // Keyboard navigation runs over the visible options in display order, across groups
-  const pickerOptions = useMemo(() => pickerGroups.flatMap(({ fields }) => fields), [pickerGroups])
 
   const autocomplete = suggestionsDismissed ? null : getAutocompleteMatch(template, caret)
   const suggestions = useMemo(() => {
@@ -271,17 +258,25 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
         <div className="p-6 flex flex-col flex-1 min-h-0">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-semibold text-foreground">
-              Generate Messages for {selectedLeadsCount} Lead{selectedLeadsCount !== 1 ? 's' : ''}
+              Generate messages for {selectedLeadsCount} lead{selectedLeadsCount !== 1 ? 's' : ''}
             </h2>
-            <button
-              onClick={handleClose}
-              disabled={generateMessagesMutation.isPending}
-              className="text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <button
+                    aria-label="Close"
+                    onClick={handleClose}
+                    disabled={generateMessagesMutation.isPending}
+                    className="text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+                  />
+                }
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </TooltipTrigger>
+              <TooltipContent>Close</TooltipContent>
+            </Tooltip>
           </div>
 
           <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
@@ -289,88 +284,9 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
             <div className="flex-1 min-h-0 overflow-y-auto space-y-6 -mx-1 px-1 -mt-3 pt-3">
             <div>
               <label htmlFor="message-template" className="block text-sm font-medium text-foreground mb-2">
-                Message Template
+                Message template
               </label>
               <div className="relative">
-                <div
-                  className="absolute -top-8 right-0"
-                  // Close when focus leaves the picker (click outside, Tab away)
-                  onBlur={(e) => {
-                    if (e.currentTarget.contains(e.relatedTarget)) return
-                    setIsFieldPickerOpen(false)
-                    setPickerQuery('')
-                  }}
-                >
-                  <input
-                    type="text"
-                    value={pickerQuery}
-                    onFocus={openFieldPicker}
-                    onChange={(e) => {
-                      if (!isFieldPickerOpen) openFieldPicker()
-                      setPickerQuery(e.target.value)
-                      setActivePickerOption(0)
-                    }}
-                    onKeyDown={handlePickerKeyDown}
-                    disabled={templatableFields.length === 0}
-                    placeholder="Insert field…"
-                    aria-label="Search fields"
-                    role="combobox"
-                    aria-autocomplete="list"
-                    aria-expanded={isFieldPickerOpen}
-                    aria-controls="field-picker-options"
-                    aria-activedescendant={
-                      isFieldPickerOpen && pickerOptions[activePickerOption]
-                        ? `field-picker-${pickerOptions[activePickerOption].key}`
-                        : undefined
-                    }
-                    className="w-44 px-2 py-1 text-xs border border-input rounded placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50"
-                  />
-                  {isFieldPickerOpen && (
-                    <div className="absolute right-0 mt-1 w-64 bg-card rounded-md shadow-lg z-10 border border-border">
-                      <div
-                        id="field-picker-options"
-                        role="listbox"
-                        aria-label="Insert field"
-                        className="max-h-64 overflow-y-auto py-1"
-                      >
-                        {pickerGroups.map(({ group, fields }) => (
-                          <div key={group} role="group" aria-label={GROUP_LABELS[group]}>
-                            <div className="px-3 pt-2 pb-1 text-xs font-semibold text-muted-foreground uppercase" aria-hidden="true">
-                              {GROUP_LABELS[group]}
-                            </div>
-                            {fields.map((field) => {
-                              const isActive = pickerOptions[activePickerOption]?.key === field.key
-                              return (
-                                <div
-                                  key={field.key}
-                                  id={`field-picker-${field.key}`}
-                                  ref={isActive ? (el) => el?.scrollIntoView?.({ block: 'nearest' }) : undefined}
-                                  role="option"
-                                  aria-selected={isActive}
-                                  // mousedown so the search box doesn't blur (and close the picker) first
-                                  onMouseDown={(e) => {
-                                    e.preventDefault()
-                                    insertFromPicker(field)
-                                  }}
-                                  onMouseEnter={() => setActivePickerOption(pickerOptions.indexOf(field))}
-                                  className={`flex w-full items-center justify-between px-3 py-1.5 text-sm cursor-pointer ${
-                                    isActive ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-900 dark:text-blue-200' : 'text-foreground'
-                                  }`}
-                                >
-                                  {field.label}
-                                  <span className="text-xs text-muted-foreground font-mono">{`{${field.key}}`}</span>
-                                </div>
-                              )
-                            })}
-                          </div>
-                        ))}
-                        {pickerOptions.length === 0 && (
-                          <div className="px-3 py-2 text-sm text-muted-foreground">No matching fields</div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
                 <textarea
                   ref={textareaRef}
                   id="message-template"
@@ -383,7 +299,7 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
                   placeholder="Enter your message template here. Type { to insert a lead field.&#10;&#10;Example: Hi {firstName}, I noticed you work at {companyName} as a {jobTitle}. Would you be interested in..."
                   rows={6}
                   // Grows with its content, so only the modal body scrolls (no scrollbar inside a scrollbar)
-                  className="w-full min-h-32 field-sizing-content px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                  className="block w-full min-h-32 field-sizing-content px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-3 focus:ring-ring/50 focus:border-ring resize-none"
                   role="combobox"
                   aria-autocomplete="list"
                   aria-expanded={suggestions.length > 0}
@@ -423,6 +339,78 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
                   </ul>
                 )}
               </div>
+              <p className="mt-1.5 text-sm text-muted-foreground">
+                Type {`{`} to add lead data. Leads missing a field you use won't get a message.
+              </p>
+              <div
+                className="mt-4"
+                // Close when focus leaves the picker (click outside, Tab away)
+                onBlur={(e) => {
+                  if (e.currentTarget.contains(e.relatedTarget)) return
+                  setIsFieldPickerOpen(false)
+                  setPickerQuery('')
+                }}
+              >
+                <input
+                  type="text"
+                  value={pickerQuery}
+                  onFocus={openFieldPicker}
+                  onChange={(e) => {
+                    if (!isFieldPickerOpen) openFieldPicker()
+                    setPickerQuery(e.target.value)
+                    setActivePickerOption(0)
+                  }}
+                  onKeyDown={handlePickerKeyDown}
+                  disabled={templatableFields.length === 0}
+                  placeholder="Insert field…"
+                  aria-label="Search fields"
+                  role="combobox"
+                  aria-autocomplete="list"
+                  aria-expanded={isFieldPickerOpen}
+                  aria-controls="field-picker-options"
+                  aria-activedescendant={
+                    isFieldPickerOpen && pickerOptions[activePickerOption]
+                      ? `field-picker-${pickerOptions[activePickerOption].key}`
+                      : undefined
+                  }
+                  className="h-8 w-48 px-2.5 text-sm bg-transparent border border-input rounded-lg placeholder:text-muted-foreground focus:outline-none focus:ring-3 focus:ring-ring/50 focus:border-ring disabled:opacity-50"
+                />
+                {isFieldPickerOpen && (
+                  <div className="mt-1 w-64 bg-card rounded-md shadow-lg border border-border">
+                    <div
+                      id="field-picker-options"
+                      role="listbox"
+                      aria-label="Insert field"
+                      className="max-h-64 overflow-y-auto py-1"
+                    >
+                      {pickerOptions.map((field, index) => (
+                        <div
+                          key={field.key}
+                          id={`field-picker-${field.key}`}
+                          ref={index === activePickerOption ? (el) => el?.scrollIntoView?.({ block: 'nearest' }) : undefined}
+                          role="option"
+                          aria-selected={index === activePickerOption}
+                          // mousedown so the search box doesn't blur (and close the picker) first
+                          onMouseDown={(e) => {
+                            e.preventDefault()
+                            insertFromPicker(field)
+                          }}
+                          onMouseEnter={() => setActivePickerOption(index)}
+                          className={`flex w-full items-center justify-between px-3 py-1.5 text-sm cursor-pointer ${
+                            index === activePickerOption ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-900 dark:text-blue-200' : 'text-foreground'
+                          }`}
+                        >
+                          {field.label}
+                          <span className="text-xs text-muted-foreground font-mono">{`{${field.key}}`}</span>
+                        </div>
+                      ))}
+                      {pickerOptions.length === 0 && (
+                        <div className="px-3 py-2 text-sm text-muted-foreground">No matching fields</div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
               {(unknownFields.length > 0 || missingFields.length > 0) && (
                 <ul className="mt-2 space-y-1 text-sm">
                   {unknownFields.map((key) => (
@@ -439,7 +427,7 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
                 </ul>
               )}
               {template.trim() && previewLead && (
-                <section aria-label="Preview" className="mt-3 rounded-md border border-border bg-muted/50 p-3">
+                <section aria-label="Preview" className="mt-5 rounded-md border border-border bg-muted/50 p-3">
                   <h3 className="text-xs font-medium text-muted-foreground mb-1">
                     Preview — {`${previewLead.firstName} ${previewLead.lastName || ''}`.trim()}
                   </h3>
@@ -456,10 +444,6 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
                   </p>
                 </section>
               )}
-              <p className="mt-2 text-sm text-muted-foreground">
-                Type {`{`} or use Insert field to add lead data. Leads missing a field you use won't get a
-                message.
-              </p>
             </div>
 
             {generationResult && (

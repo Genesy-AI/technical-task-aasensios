@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils'
 import type { DataTableFeatures } from '@/lib/data-table-features'
 
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import {
   Select,
   SelectContent,
@@ -35,15 +36,13 @@ export function DataTablePagination<TData extends RowData>({
       selector={(state) => ({
         pageIndex: state.pagination.pageIndex,
         pageSize: state.pagination.pageSize,
-        selectedRowCount: table.getSelectedRowIds().length,
       })}
     >
-      {({ pageIndex, pageSize, selectedRowCount }) => (
+      {({ pageIndex, pageSize }) => (
         <DataTablePaginationContent
           table={table}
           pageIndex={pageIndex}
           pageSize={pageSize}
-          selectedRowCount={selectedRowCount}
           pageSizeOptions={pageSizeOptions}
           className={className}
           {...props}
@@ -57,7 +56,6 @@ interface DataTablePaginationContentProps<TData extends RowData> extends React.C
   table: Table<DataTableFeatures, TData>
   pageIndex: number
   pageSize: number
-  selectedRowCount: number
   pageSizeOptions: number[]
 }
 
@@ -65,7 +63,6 @@ function DataTablePaginationContent<TData extends RowData>({
   table,
   pageIndex,
   pageSize,
-  selectedRowCount,
   pageSizeOptions,
   className,
   ...props
@@ -77,14 +74,11 @@ function DataTablePaginationContent<TData extends RowData>({
   return (
     <div
       className={cn(
-        'flex w-full flex-col-reverse items-center justify-between gap-4 overflow-auto p-1 sm:flex-row sm:gap-8',
+        'flex w-full flex-col-reverse items-center justify-end gap-4 overflow-auto p-1 sm:flex-row sm:gap-8',
         className
       )}
       {...props}
     >
-      <div className="flex-1 text-sm whitespace-nowrap text-muted-foreground">
-        {selectedRowCount} {selectedRowCount === 1 ? 'row' : 'rows'} selected.
-      </div>
       <div className="flex flex-col-reverse items-center gap-4 sm:flex-row sm:gap-6 lg:gap-8">
         <div className="flex items-center space-x-2">
           <p className="text-sm font-medium whitespace-nowrap">Rows per page</p>
@@ -113,44 +107,72 @@ function DataTablePaginationContent<TData extends RowData>({
           Page {pageIndex + 1} of {pageCount}
         </div>
         <div className="flex items-center space-x-2">
-          <Button
-            aria-label="Go to first page"
-            variant="outline"
-            size="icon"
-            className="hidden lg:flex"
-            onClick={() => table.setPageIndex(0)}
-            disabled={!canPreviousPage}
-          >
-            <IconChevronsLeft />
-          </Button>
-          <Button
-            aria-label="Go to previous page"
-            variant="outline"
-            size="icon"
-            onClick={() => table.previousPage()}
-            disabled={!canPreviousPage}
-          >
-            <IconChevronLeft />
-          </Button>
-          <Button
-            aria-label="Go to next page"
-            variant="outline"
-            size="icon"
-            onClick={() => table.nextPage()}
-            disabled={!canNextPage}
-          >
-            <IconChevronRight />
-          </Button>
-          <Button
-            aria-label="Go to last page"
-            variant="outline"
-            size="icon"
-            className="hidden lg:flex"
-            onClick={() => table.setPageIndex(pageCount - 1)}
-            disabled={!canNextPage}
-          >
-            <IconChevronsRight />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  aria-label="Go to first page"
+                  variant="outline"
+                  size="icon"
+                  className="hidden lg:flex"
+                  onClick={() => table.setPageIndex(0)}
+                  disabled={!canPreviousPage}
+                />
+              }
+            >
+              <IconChevronsLeft />
+            </TooltipTrigger>
+            <TooltipContent>First page</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  aria-label="Go to previous page"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => table.previousPage()}
+                  disabled={!canPreviousPage}
+                />
+              }
+            >
+              <IconChevronLeft />
+            </TooltipTrigger>
+            <TooltipContent>Previous page</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  aria-label="Go to next page"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => table.nextPage()}
+                  disabled={!canNextPage}
+                />
+              }
+            >
+              <IconChevronRight />
+            </TooltipTrigger>
+            <TooltipContent>Next page</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  aria-label="Go to last page"
+                  variant="outline"
+                  size="icon"
+                  className="hidden lg:flex"
+                  onClick={() => table.setPageIndex(pageCount - 1)}
+                  disabled={!canNextPage}
+                />
+              }
+            >
+              <IconChevronsRight />
+            </TooltipTrigger>
+            <TooltipContent>Last page</TooltipContent>
+          </Tooltip>
         </div>
       </div>
     </div>

@@ -28,11 +28,11 @@ export function DataTableAdvancedToolbar<TData extends RowData>({
       className={cn('flex w-full items-start justify-between gap-2 p-1', className)}
       {...props}
     >
-      <div className="flex flex-1 flex-wrap items-center gap-2">{children}</div>
-      <div className="flex items-center gap-2">
-        {actions}
-        <DataTableViewOptions table={table} align="end" />
+      <div className="flex flex-1 flex-wrap items-center gap-2">
+        {children}
+        <DataTableViewOptions table={table} align="start" />
       </div>
+      <div className="flex items-center gap-2">{actions}</div>
     </div>
   )
 }

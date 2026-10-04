@@ -50,11 +50,18 @@ const renderLeadsList = () =>
     </QueryClientProvider>
   )
 
+const openEnrichMenu = () => fireEvent.click(screen.getByRole('button', { name: /enrich/i }))
+
+const chooseEnrichAction = async (name: RegExp) => {
+  openEnrichMenu()
+  fireEvent.click(await screen.findByRole('menuitem', { name }))
+}
+
 // Checkbox 0 is "select all"; the rest follow the lead rows in order
 const selectAndVerify = async (checkboxIndex: number) => {
   await screen.findByText('jane.smith@example.com', { exact: false })
   fireEvent.click(screen.getAllByRole('checkbox')[checkboxIndex])
-  fireEvent.click(screen.getByRole('button', { name: /verify email/i }))
+  await chooseEnrichAction(/verify email/i)
 }
 const selectAllAndVerify = () => selectAndVerify(0)
 
@@ -79,7 +86,8 @@ describe('LeadsList email verification feedback', () => {
     await selectAllAndVerify()
 
     expect(await screen.findByText('Verifying 2 emails...')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /verify email/i })).toBeDisabled()
+    openEnrichMenu()
+    expect(await screen.findByRole('menuitem', { name: /verify email/i })).toHaveAttribute('aria-disabled', 'true')
 
     await act(async () => {
       resolveVerify({
@@ -256,7 +264,7 @@ describe('LeadsList phone enrichment', () => {
 
     await screen.findByText('jane.smith@example.com', { exact: false })
     fireEvent.click(screen.getAllByRole('checkbox')[0])
-    fireEvent.click(screen.getByRole('button', { name: /find phone/i }))
+    await chooseEnrichAction(/find phone/i)
 
     await waitFor(() => expect(api.leads.enrichPhones).toHaveBeenCalledWith({ leadIds: [1, 2] }))
     expect(await screen.findByText('Searching phone for 1 lead')).toBeInTheDocument()
@@ -332,7 +340,7 @@ describe('LeadsList selection actions', () => {
     expect(await screen.findByText('1 selected')).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: /generate messages/i }))
-    expect(await screen.findByText('Generate Messages for 1 Lead')).toBeInTheDocument()
+    expect(await screen.findByText('Generate messages for 1 lead')).toBeInTheDocument()
     // Opening an action keeps the selection, so the bar stays
     expect(screen.getByText('1 selected')).toBeInTheDocument()
   })

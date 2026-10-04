@@ -73,16 +73,21 @@ test.describe('selection actions', () => {
     api.seed([makeLead(1, 'Ada', 'Lovelace'), makeLead(2, 'Grace', 'Hopper')])
     await page.goto('/')
 
-    const verifyEmail = page.getByRole('button', { name: 'Verify email' })
+    const enrich = page.getByRole('button', { name: 'Enrich' })
+    const filter = page.getByRole('button', { name: 'Filter' })
     await expect(page.getByText('ada.lovelace@example.com')).toBeVisible()
-    await expect(verifyEmail).toBeHidden()
+    await expect(enrich).toBeHidden()
+    await expect(filter).toBeVisible()
 
+    // The actions replace the table toolbar while leads are selected
     await page.getByRole('checkbox', { name: 'Select Ada Lovelace' }).click()
     await expect(page.getByText('1 selected', { exact: true })).toBeVisible()
-    await expect(verifyEmail).toBeVisible()
+    await expect(enrich).toBeVisible()
+    await expect(filter).toBeHidden()
 
     await page.getByRole('button', { name: 'Clear selection' }).click()
-    await expect(verifyEmail).toBeHidden()
+    await expect(enrich).toBeHidden()
+    await expect(filter).toBeVisible()
     await expect(page.getByRole('checkbox', { name: 'Select Ada Lovelace' })).not.toBeChecked()
   })
 
@@ -126,7 +131,8 @@ test.describe('selection actions', () => {
     await page.goto('/')
 
     await page.getByRole('checkbox', { name: 'Select all leads' }).click()
-    await page.getByRole('button', { name: 'Verify email' }).click()
+    await page.getByRole('button', { name: 'Enrich' }).click()
+    await page.getByRole('menuitem', { name: 'Verify email' }).click()
 
     await expect(page.getByText('1 valid email')).toBeVisible()
     await expect(page.getByText('Invalid email for: Grace Hopper')).toBeVisible()
@@ -139,7 +145,8 @@ test.describe('selection actions', () => {
     await page.goto('/')
 
     await page.getByRole('checkbox', { name: 'Select Ada Lovelace' }).click()
-    await page.getByRole('button', { name: 'Find phone' }).click()
+    await page.getByRole('button', { name: 'Enrich' }).click()
+    await page.getByRole('menuitem', { name: 'Find phone' }).click()
 
     await expect(page.getByText('Searching phone for 1 lead')).toBeVisible()
     await expect(page.getByText('+34 600 000 000')).toBeVisible()
@@ -167,10 +174,10 @@ test.describe('message generation', () => {
 
     await page.getByRole('checkbox', { name: 'Select Ada Lovelace' }).click()
     await page.getByRole('button', { name: 'Generate messages' }).click()
-    const dialog = page.getByText('Generate Messages for 1 Lead')
+    const dialog = page.getByText('Generate messages for 1 lead')
     await expect(dialog).toBeVisible()
 
-    const template = page.getByRole('combobox', { name: 'Message Template' })
+    const template = page.getByRole('combobox', { name: 'Message template' })
     await template.fill('Hi ')
     const fieldSearch = page.getByRole('combobox', { name: 'Search fields' })
     await fieldSearch.fill('first')
@@ -208,7 +215,7 @@ test.describe('dialog scrolling', () => {
       mimeType: 'text/csv',
       buffer: Buffer.from(['firstName,lastName,email', ...rows].join('\n')),
     })
-    await expect(page.getByText('Import Summary')).toBeVisible()
+    await expect(page.getByText('Import summary')).toBeVisible()
 
     const scrollers = await page.evaluate(() =>
       [...document.querySelectorAll('body *')]
@@ -228,7 +235,7 @@ test.describe('dialog scrolling', () => {
     await page.getByRole('checkbox', { name: 'Select Ada Lovelace' }).click()
     await page.getByRole('button', { name: 'Generate messages' }).click()
 
-    const template = page.getByRole('combobox', { name: 'Message Template' })
+    const template = page.getByRole('combobox', { name: 'Message template' })
     await template.fill(Array.from({ length: 30 }, (_, index) => `Line ${index} for {firstName}`).join('\n'))
 
     const textareaScrolls = await template.evaluate((el) => el.scrollHeight > el.clientHeight + 1)
@@ -243,16 +250,16 @@ test.describe('message draft', () => {
     await page.goto('/')
     await page.getByRole('checkbox', { name: 'Select Ada Lovelace' }).click()
     await page.getByRole('button', { name: 'Generate messages' }).click()
-    await page.getByRole('combobox', { name: 'Message Template' }).fill('Hi {firstName}, a quick question')
+    await page.getByRole('combobox', { name: 'Message template' }).fill('Hi {firstName}, a quick question')
 
     // A stray click on the backdrop closes the dialog
     await page.mouse.click(5, 5)
-    await expect(page.getByText('Generate Messages for 1 Lead')).toBeHidden()
+    await expect(page.getByText('Generate messages for 1 lead')).toBeHidden()
 
     await page.reload()
     await page.getByRole('checkbox', { name: 'Select Ada Lovelace' }).click()
     await page.getByRole('button', { name: 'Generate messages' }).click()
-    await expect(page.getByRole('combobox', { name: 'Message Template' })).toHaveValue(
+    await expect(page.getByRole('combobox', { name: 'Message template' })).toHaveValue(
       'Hi {firstName}, a quick question'
     )
   })
@@ -275,7 +282,7 @@ test.describe('CSV import', () => {
       ),
     })
 
-    await expect(page.getByText('Import Summary')).toBeVisible()
+    await expect(page.getByText('Import summary')).toBeVisible()
     await page.getByRole('button', { name: 'Import 2 valid leads' }).click()
 
     await expect(page.getByText('grace.hopper@example.com')).toBeVisible()

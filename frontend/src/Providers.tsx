@@ -3,6 +3,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { NuqsAdapter } from 'nuqs/adapters/react'
 import { FC, PropsWithChildren } from 'react'
 import { Toaster } from 'react-hot-toast'
+import { TooltipProvider } from '@/components/ui/tooltip'
 
 const queryClient = new QueryClient()
 
@@ -47,7 +48,9 @@ export const Providers: FC<PropsWithChildren> = ({ children }) => {
           },
         }}
       />
-      <NuqsAdapter>{children}</NuqsAdapter>
+      <NuqsAdapter>
+        <TooltipProvider delay={300}>{children}</TooltipProvider>
+      </NuqsAdapter>
     </QueryClientProvider>
   )
 }

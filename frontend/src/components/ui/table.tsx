@@ -34,12 +34,20 @@ function useHorizontalOverflow(containerRef: React.RefObject<HTMLDivElement | nu
   return overflow
 }
 
-function Table({ className, ...props }: React.ComponentProps<'table'>) {
+function Table({
+  className,
+  scrollFadeStart = 0,
+  ...props
+}: React.ComponentProps<'table'> & {
+  // Width in px of the columns pinned to the start; the start fade begins after them
+  scrollFadeStart?: number
+}) {
   const containerRef = React.useRef<HTMLDivElement>(null)
   const overflow = useHorizontalOverflow(containerRef)
+  const fadeStart = overflow.start ? scrollFadeStart : 0
   const maskImage =
     overflow.start || overflow.end
-      ? `linear-gradient(to right, transparent, #000 ${overflow.start ? SCROLL_FADE_WIDTH : '0px'}, #000 calc(100% - ${overflow.end ? SCROLL_FADE_WIDTH : '0px'}), transparent)`
+      ? `linear-gradient(to right, #000 ${fadeStart}px, transparent ${fadeStart}px, #000 calc(${fadeStart}px + ${overflow.start ? SCROLL_FADE_WIDTH : '0px'}), #000 calc(100% - ${overflow.end ? SCROLL_FADE_WIDTH : '0px'}), transparent)`
       : undefined
 
   return (

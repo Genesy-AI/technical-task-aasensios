@@ -16,6 +16,7 @@ import type { DataTableFeatures } from '@/lib/data-table-features'
 import { SORT_ORDERS } from '@/lib/data-table-utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import {
   Faceted,
   FacetedContent,
@@ -168,7 +169,7 @@ function DataTableSortMenuContent<TData extends RowData>({
         <PopoverTrigger
           render={<Button variant="outline" onKeyDown={onTriggerKeyDown} disabled={disabled} />}
         >
-          <IconArrowsSort className="text-muted-foreground" />
+          <IconArrowsSort />
           Sort
           {sorting.length > 0 && (
             <Badge variant="secondary" className="h-[18.24px] px-[5.12px] font-mono text-[10.4px]">
@@ -345,18 +346,36 @@ function DataTableSortItem({
           </SelectGroup>
         </SelectContent>
       </Select>
-      <Button
-        aria-controls={sortItemId}
-        variant="outline"
-        size="icon"
-        className="shrink-0"
-        onClick={() => onSortRemove(sort.id)}
-      >
-        <IconTrash />
-      </Button>
-      <SortableItemHandle render={<Button variant="outline" size="icon" className="shrink-0" />}>
-        <IconGripVertical />
-      </SortableItemHandle>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              aria-label="Remove sort"
+              aria-controls={sortItemId}
+              variant="outline"
+              size="icon"
+              className="shrink-0"
+              onClick={() => onSortRemove(sort.id)}
+            />
+          }
+        >
+          <IconTrash />
+        </TooltipTrigger>
+        <TooltipContent>Remove sort</TooltipContent>
+      </Tooltip>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <SortableItemHandle
+              aria-label="Drag to reorder"
+              render={<Button variant="outline" size="icon" className="shrink-0" />}
+            />
+          }
+        >
+          <IconGripVertical />
+        </TooltipTrigger>
+        <TooltipContent>Drag to reorder</TooltipContent>
+      </Tooltip>
     </SortableItem>
   )
 }

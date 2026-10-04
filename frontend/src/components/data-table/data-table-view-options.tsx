@@ -53,12 +53,12 @@ export function DataTableViewOptions<TData extends RowData>({
                 aria-label="Toggle columns"
                 role="combobox"
                 variant="outline"
-                className="ml-auto hidden lg:flex"
+                className="hidden lg:flex"
                 disabled={disabled}
               />
             }
           >
-            <IconEye className="text-muted-foreground" />
+            <IconEye />
             View
           </FacetedTrigger>
           <FacetedContent align="center" className={cn('w-44', className)} {...props}>

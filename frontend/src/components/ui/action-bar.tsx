@@ -231,7 +231,7 @@ function ActionBarSelection(props: DivProps) {
     props: mergeProps<'div'>(
       {
         className: cn(
-          'flex items-center gap-1 rounded-sm border px-2 py-1 text-sm font-medium tabular-nums',
+          'flex items-center gap-1 px-2 py-1 text-sm font-medium tabular-nums',
           className
         ),
       },

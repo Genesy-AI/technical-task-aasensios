@@ -108,7 +108,7 @@ describe('MessageTemplateModal', () => {
     return search
   }
 
-  it('lists every field grouped by category when the search box is focused', async () => {
+  it('lists every field, without group headers, when the search box is focused', async () => {
     renderModal()
     const search = await fieldsLoaded()
     expect(screen.queryByRole('listbox', { name: /insert field/i })).not.toBeInTheDocument()
@@ -116,12 +116,10 @@ describe('MessageTemplateModal', () => {
     act(() => search.focus())
 
     const picker = screen.getByRole('listbox', { name: /insert field/i })
-    expect(within(picker).getAllByRole('group').map((group) => group.getAttribute('aria-label'))).toEqual([
-      'Contact',
-      'Company',
-      'Social',
-    ])
-    expect(within(picker).getAllByRole('option')).toHaveLength(leadFieldsFixture.length)
+    expect(within(picker).queryByRole('group')).not.toBeInTheDocument()
+    expect(within(picker).getAllByRole('option').map((option) => option.textContent)).toEqual(
+      leadFieldsFixture.filter((field) => field.templatable).map((field) => `${field.label}{${field.key}}`)
+    )
   })
 
   it('narrows the options as you type, by label or placeholder', async () => {
@@ -133,7 +131,6 @@ describe('MessageTemplateModal', () => {
     expect(within(picker).getAllByRole('option').map((option) => option.textContent)).toEqual([
       'LinkedIn{linkedinUrl}',
     ])
-    expect(within(picker).getAllByRole('group').map((group) => group.getAttribute('aria-label'))).toEqual(['Social'])
 
     fireEvent.change(search, { target: { value: 'countryco' } })
     expect(within(picker).getByRole('option')).toHaveTextContent('Country')

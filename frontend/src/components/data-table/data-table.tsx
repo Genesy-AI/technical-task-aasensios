@@ -20,9 +20,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 const ROW_HEIGHT_CLASS_NAME = 'h-12'
 
 const PINNED_CELL_CLASS_NAME = cn(
-  'bg-background transition-colors',
-  'group-hover/row:bg-[color-mix(in_srgb,var(--muted)_50%,var(--background))]',
-  'group-has-aria-expanded/row:bg-[color-mix(in_srgb,var(--muted)_50%,var(--background))]',
+  'bg-card transition-colors',
+  'group-hover/row:bg-[color-mix(in_srgb,var(--muted)_50%,var(--card))]',
+  'group-has-aria-expanded/row:bg-[color-mix(in_srgb,var(--muted)_50%,var(--card))]',
   'group-data-[state=selected]/row:bg-muted'
 )
 
@@ -72,7 +72,7 @@ function DataTableLayout<TData extends RowData>({ table, children }: DataTableLa
       })}
     >
       {() => (
-        <Table className="table-fixed" style={getColumnSizingStyle(table)}>
+        <Table className="table-fixed" style={getColumnSizingStyle(table)} scrollFadeStart={table.getStartTotalSize()}>
           {children}
         </Table>
       )}

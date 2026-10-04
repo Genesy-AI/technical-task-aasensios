@@ -24,6 +24,7 @@ import { generateId } from '@/lib/id'
 import { DataTableRangeFilter } from '@/components/data-table/data-table-range-filter'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import {
   Faceted,
   FacetedContent,
@@ -176,7 +177,7 @@ function DataTableFilterMenuContent<TData extends RowData>({
         <PopoverTrigger
           render={<Button variant="outline" onKeyDown={onTriggerKeyDown} disabled={disabled} />}
         >
-          <IconFilter2 className="text-muted-foreground" />
+          <IconFilter2 />
           Filter
           {hasFilters && (
             <Badge variant="secondary" className="h-[18.24px] px-[5.12px] font-mono text-[10.4px]">
@@ -333,17 +334,32 @@ function DataTableFilterItem<TData extends RowData>({
           {...getSelectorProps('value')}
         />
       </div>
-      <Button
-        aria-controls={filterItemId}
-        variant="outline"
-        size="icon"
-        onClick={() => onFilterRemove(filter.filterId)}
-      >
-        <IconTrash />
-      </Button>
-      <SortableItemHandle render={<Button variant="outline" size="icon" />}>
-        <IconGripVertical />
-      </SortableItemHandle>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              aria-label="Remove filter"
+              aria-controls={filterItemId}
+              variant="outline"
+              size="icon"
+              onClick={() => onFilterRemove(filter.filterId)}
+            />
+          }
+        >
+          <IconTrash />
+        </TooltipTrigger>
+        <TooltipContent>Remove filter</TooltipContent>
+      </Tooltip>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <SortableItemHandle aria-label="Drag to reorder" render={<Button variant="outline" size="icon" />} />
+          }
+        >
+          <IconGripVertical />
+        </TooltipTrigger>
+        <TooltipContent>Drag to reorder</TooltipContent>
+      </Tooltip>
     </SortableItem>
   )
 }

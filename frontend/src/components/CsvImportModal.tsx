@@ -6,6 +6,7 @@ import { api } from '../api'
 import { CsvLead, parseCsv } from '../utils/csvParser'
 import { useLeadFields } from '../hooks/useLeadFields'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 interface CsvImportModalProps {
   isOpen: boolean
@@ -190,16 +191,24 @@ export const CsvImportModal: FC<CsvImportModalProps> = ({ isOpen, onClose }) => 
       >
         <div className="px-6 py-4 border-b border-border shrink-0">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-medium text-foreground">Import Leads from CSV</h3>
-            <button
-              onClick={handleClose}
-              disabled={importMutation.isPending}
-              className="text-muted-foreground hover:text-foreground focus:outline-none disabled:opacity-50"
-            >
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+            <h3 className="text-lg font-medium text-foreground">Import leads from CSV</h3>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <button
+                    aria-label="Close"
+                    onClick={handleClose}
+                    disabled={importMutation.isPending}
+                    className="text-muted-foreground hover:text-foreground focus:outline-none disabled:opacity-50"
+                  />
+                }
+              >
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </TooltipTrigger>
+              <TooltipContent>Close</TooltipContent>
+            </Tooltip>
           </div>
         </div>
 
@@ -264,19 +273,19 @@ export const CsvImportModal: FC<CsvImportModalProps> = ({ isOpen, onClose }) => 
           ) : (
             <div className="flex flex-col flex-1 min-h-0 gap-4">
               <div className="bg-muted/50 rounded-lg p-4 shrink-0">
-                <h4 className="text-sm font-medium text-foreground mb-3">Import Summary</h4>
+                <h4 className="text-sm font-medium text-foreground mb-3">Import summary</h4>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="bg-card rounded p-3 text-center">
                     <div className="text-lg font-semibold text-foreground">{stats.total}</div>
-                    <div className="text-xs text-muted-foreground">Total Rows</div>
+                    <div className="text-xs text-muted-foreground">Total rows</div>
                   </div>
                   <div className="bg-card rounded p-3 text-center">
                     <div className="text-lg font-semibold text-green-600 dark:text-green-400">{stats.valid}</div>
-                    <div className="text-xs text-muted-foreground">Valid Leads</div>
+                    <div className="text-xs text-muted-foreground">Valid leads</div>
                   </div>
                   <div className="bg-card rounded p-3 text-center">
                     <div className="text-lg font-semibold text-red-600 dark:text-red-400">{stats.invalid}</div>
-                    <div className="text-xs text-muted-foreground">Invalid Leads</div>
+                    <div className="text-xs text-muted-foreground">Invalid leads</div>
                   </div>
                   <div className="bg-card rounded p-3 text-center">
                     <div className="text-lg font-semibold text-yellow-600 dark:text-yellow-400">{stats.duplicatesInCsv}</div>

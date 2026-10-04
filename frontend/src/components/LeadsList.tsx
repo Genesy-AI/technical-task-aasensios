@@ -22,6 +22,7 @@ const pluralizeLeads = (count: number) => (count === 1 ? '1 lead' : `${count} le
 export const LeadsList: FC = () => {
   const [isMessageModalOpen, setIsMessageModalOpen] = useState(false)
   const [isImportModalOpen, setIsImportModalOpen] = useState(false)
+  const [actionBarContainer, setActionBarContainer] = useState<HTMLDivElement | null>(null)
   const queryClient = useQueryClient()
 
   const leads = useQuery({
@@ -48,6 +49,7 @@ export const LeadsList: FC = () => {
     initialState: {
       sorting: [{ id: 'createdAt', desc: true }],
       pagination: { pageIndex: 0, pageSize: 10 },
+      columnPinning: { start: ['select', 'name'], end: [] },
     },
   })
 
@@ -168,7 +170,7 @@ export const LeadsList: FC = () => {
   return (
     <div>
       <h2 className="mb-4 text-lg font-semibold text-foreground">Leads</h2>
-      <div className="bg-card rounded-lg shadow-sm border border-border px-6 py-4">
+      <div className="bg-card rounded-lg border border-border p-4">
         {leads.isError ? (
           <div className="text-center py-12">
             <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-lg p-6">
@@ -193,15 +195,21 @@ export const LeadsList: FC = () => {
           </div>
         ) : (
           <DataTable table={table}>
-            <DataTableAdvancedToolbar table={table} actions={importCsvButton}>
-              <DataTableSortMenu table={table} align="start" />
-              <DataTableFilterMenu table={table} align="start" />
-            </DataTableAdvancedToolbar>
+            {selectedLeads.length > 0 ? (
+              // The selection actions take the toolbar's place
+              <div ref={setActionBarContainer} className="flex p-1" />
+            ) : (
+              <DataTableAdvancedToolbar table={table} actions={importCsvButton}>
+                <DataTableSortMenu table={table} align="start" />
+                <DataTableFilterMenu table={table} align="start" />
+              </DataTableAdvancedToolbar>
+            )}
           </DataTable>
         )}
       </div>
 
       <LeadsActionBar
+        container={actionBarContainer}
         selectedCount={selectedLeads.length}
         onClearSelection={() => table.resetRowSelection(true)}
         onVerifyEmails={() => verifyEmailsMutation.mutate(selectedLeads)}
