@@ -25,6 +25,7 @@
 - [ ] [refactor] share common typescript types between backend and frontend
 - [ ] [dx] display black/white logo in readme depending on github light/dark mode
 - [ ] [dx] migrate to vite+
+- [ ] [dx] fix frontend lint - ESLint 9 ignores the legacy `.eslintrc.cjs`, so `pnpm lint` fails; migrate to flat config (`eslint.config.js`) and drop the removed `--ext` flag
 
 ## Outside this repo - the real world ™
 
