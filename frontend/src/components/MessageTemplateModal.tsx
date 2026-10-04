@@ -559,9 +559,9 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
                       Generating...
                     </>
                   ) : generationResult ? (
-                    'Try Again'
+                    'Try again'
                   ) : (
-                    'Generate Messages'
+                    'Generate messages'
                   )}
                 </Button>
               )}

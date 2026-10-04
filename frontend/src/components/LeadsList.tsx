@@ -178,7 +178,7 @@ export const LeadsList: FC = () => {
                   {leads.error?.message || 'An unexpected error occurred'}
                 </div>
                 <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>
-                  Refresh Page
+                  Refresh page
                 </Button>
               </div>
             </div>

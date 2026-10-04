@@ -83,18 +83,18 @@ export const LeadsActionBar: FC<LeadsActionBarProps> = ({
     <ActionBarGroup>
       <Action
         icon={isVerifyingEmails ? <Spinner /> : <IconMailCheck />}
-        label="Verify Email"
+        label="Verify email"
         onClick={onVerifyEmails}
         disabled={isVerifyingEmails}
       />
       <Action
         icon={isFindingPhones ? <Spinner /> : <IconPhoneCall />}
-        label="Find Phone"
+        label="Find phone"
         onClick={onFindPhones}
         disabled={isFindingPhones}
       />
-      <Action icon={<IconUserQuestion />} label="Guess Gender" onClick={onGuessGender} />
-      <Action icon={<IconMessage2 />} label="Generate Messages" onClick={onGenerateMessages} />
+      <Action icon={<IconUserQuestion />} label="Guess gender" onClick={onGuessGender} />
+      <Action icon={<IconMessage2 />} label="Generate messages" onClick={onGenerateMessages} />
       <Action
         icon={isDeleting ? <Spinner /> : <IconTrash />}
         label={isDeleting ? 'Deleting...' : 'Delete'}

@@ -341,7 +341,7 @@ export const CsvImportModal: FC<CsvImportModalProps> = ({ isOpen, onClose }) => 
           <div className="px-6 py-4 border-t border-border flex justify-between shrink-0">
             <div className="flex space-x-3">
               <Button variant="outline" onClick={() => setCsvData([])}>
-                Clear Data
+                Clear data
               </Button>
             </div>
             <div className="flex space-x-3">
@@ -349,7 +349,7 @@ export const CsvImportModal: FC<CsvImportModalProps> = ({ isOpen, onClose }) => 
                 Cancel
               </Button>
               <Button onClick={handleImport} disabled={stats.valid === 0 || importMutation.isPending}>
-                {importMutation.isPending ? 'Importing...' : `Import ${stats.valid} Valid Leads`}
+                {importMutation.isPending ? 'Importing...' : `Import ${stats.valid} valid leads`}
               </Button>
             </div>
           </div>
