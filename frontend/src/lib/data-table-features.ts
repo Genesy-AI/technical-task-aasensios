@@ -16,6 +16,7 @@ import {
   makeStateUpdater,
   metaHelper,
   setStateSlice,
+  sortFns,
   type OnChangeFn,
   type RowData,
   rowPaginationFeature,
@@ -220,6 +221,7 @@ export const dataTableFeatures = tableFeatures({
   facetedMinMaxValues: createFacetedMinMaxValues(),
   paginatedRowModel: createPaginatedRowModel(),
   sortedRowModel: createSortedRowModel(),
+  sortFns,
   columnMeta: metaHelper<DataTableColumnMeta>(),
 })
 

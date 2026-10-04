@@ -262,7 +262,13 @@ export const getLeadsTableColumns = (
   },
 ]
 
-export const getCountryOptions = (leads: Lead[]): FilterOption[] =>
+// Joined into a string so the columns only rebuild when the set of countries changes, not on every poll
+export const getCountryCodesKey = (leads: Lead[]) =>
   [...new Set(leads.map((lead) => lead.countryCode).filter((code): code is string => !!code))]
+    .sort()
+    .join(',')
+
+export const getCountryOptions = (countryCodesKey: string): FilterOption[] =>
+  (countryCodesKey ? countryCodesKey.split(',') : [])
     .map((code) => ({ label: countryName(code), value: code }))
     .sort((a, b) => a.label.localeCompare(b.label))

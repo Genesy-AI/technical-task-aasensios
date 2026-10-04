@@ -1,12 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useSelector } from '@tanstack/react-store'
-import { FC, useMemo, useState } from 'react'
+import { FC, useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import { DataTable } from '@/components/data-table/data-table'
 import { DataTableToolbar } from '@/components/data-table/data-table-toolbar'
 import { useDataTable } from '@/hooks/use-data-table'
 import { api } from '../api'
-import { getCountryOptions, getLeadsTableColumns, isPhoneSearchInProgress, Lead } from './leadsTableColumns'
+import { getCountryCodesKey, getCountryOptions, getLeadsTableColumns, isPhoneSearchInProgress, Lead } from './leadsTableColumns'
 import { MessageTemplateModal } from './MessageTemplateModal'
 import { CsvImportModal } from './CsvImportModal'
 
@@ -30,7 +30,8 @@ export const LeadsList: FC = () => {
   })
 
   const leadsData = useMemo(() => (leads.isError ? [] : leads.data ?? []), [leads.isError, leads.data])
-  const columns = useMemo(() => getLeadsTableColumns(getCountryOptions(leadsData)), [leadsData])
+  const countryCodesKey = getCountryCodesKey(leadsData)
+  const columns = useMemo(() => getLeadsTableColumns(getCountryOptions(countryCodesKey)), [countryCodesKey])
 
   const { table } = useDataTable({
     data: leadsData,
@@ -48,6 +49,13 @@ export const LeadsList: FC = () => {
       .filter((id) => rowSelection[id])
       .map(Number)
   )
+
+  // Bulk actions must not reach leads hidden by a filter, so a filter change clears the selection.
+  // `table` gets a new identity on every render, so only the filters key may drive this effect.
+  const columnFiltersKey = useSelector(table.atoms.columnFilters, (filters) => JSON.stringify(filters))
+  useEffect(() => {
+    if (table.getSelectedRowIds().length > 0) table.resetRowSelection(true)
+  }, [columnFiltersKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const deleteLeadsMutation = useMutation({
     mutationFn: async (ids: number[]) => api.leads.deleteMany({ ids }),
