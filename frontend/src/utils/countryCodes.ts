@@ -24,5 +24,5 @@ export const COUNTRY_CODE_ALIASES: Readonly<Record<string, string>> = { UK: 'GB'
 
 const regionNames = new Intl.DisplayNames(['en'], { type: 'region' })
 
-// Human-readable name for display; anything that isn't an assigned ISO code is shown as-is
+// Anything that isn't an assigned ISO code is shown as-is
 export const countryName = (code: string): string => (COUNTRY_CODES.has(code) ? (regionNames.of(code) ?? code) : code)

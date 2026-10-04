@@ -11,7 +11,6 @@ import { DataTableViewOptions } from '@/components/data-table/data-table-view-op
 
 interface DataTableAdvancedToolbarProps<TData extends RowData> extends React.ComponentProps<'div'> {
   table: Table<DataTableFeatures, TData>
-  // Extra actions rendered next to the View button
   actions?: React.ReactNode
 }
 

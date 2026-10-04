@@ -36,7 +36,6 @@ const getErrorMessage = (body: unknown, status: number) => {
   return `Request failed with status code ${status}`
 }
 
-// GET input becomes query parameters; every other method sends it as a JSON body
 export const request = async (method: Method, path: string, input?: unknown): Promise<unknown> => {
   const isGet = method === 'get'
   const res = await fetch(`${API_URL}${path}${isGet ? toQueryString(input) : ''}`, {

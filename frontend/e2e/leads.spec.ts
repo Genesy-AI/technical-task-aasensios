@@ -98,7 +98,6 @@ test.describe('selection actions', () => {
     // Some leads selected: the header shows a dash
     await expect(selectAll).toHaveAttribute('aria-checked', 'mixed')
 
-    // With a selection, the header checkbox clears it
     await selectAll.click()
     await expect(selection).toBeHidden()
     await expect(selectAll).toHaveAttribute('aria-checked', 'false')

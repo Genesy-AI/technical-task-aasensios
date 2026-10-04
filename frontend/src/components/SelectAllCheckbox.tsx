@@ -14,7 +14,6 @@ import type { DataTableFeatures } from '@/lib/data-table-features'
 
 const pluralizeLeads = (count: number) => (count === 1 ? '1 lead' : `${count} leads`)
 
-// Header checkbox: clears an existing selection, otherwise asks whether to select the page or every lead
 export function SelectAllCheckbox<TData extends RowData>({
   table,
 }: {
