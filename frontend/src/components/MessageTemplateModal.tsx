@@ -7,6 +7,7 @@ import { LeadField } from '../api/types/leads/getFields'
 import { LeadsGetManyOutput } from '../api/types/leads/getMany'
 import { useLeadFields } from '../hooks/useLeadFields'
 import { findMissingFields, findUnknownFields, getAutocompleteMatch, renderPreview } from '../utils/messageTemplate'
+import { IconMessage2 } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
@@ -545,7 +546,10 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
                   ) : generationResult ? (
                     'Try again'
                   ) : (
-                    'Generate messages'
+                    <>
+                      <IconMessage2 data-icon="inline-start" />
+                      Generate messages
+                    </>
                   )}
                 </Button>
               )}

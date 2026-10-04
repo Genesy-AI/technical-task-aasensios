@@ -49,10 +49,10 @@ const Action: FC<{
   label: string
   onClick: () => void
   disabled?: boolean
-  destructive?: boolean
-}> = ({ icon, label, onClick, disabled, destructive }) => (
+  variant?: 'default' | 'destructive'
+}> = ({ icon, label, onClick, disabled, variant = 'default' }) => (
   <ActionBarItem
-    variant={destructive ? 'destructive' : 'brand-secondary'}
+    variant={variant}
     size="default"
     disabled={disabled}
     onClick={onClick}
@@ -109,7 +109,7 @@ export const LeadsActionBar: FC<LeadsActionBarProps> = ({
       <ActionBarGroup className="ms-auto">
         <DropdownMenu open={isEnrichMenuOpen} onOpenChange={setIsEnrichMenuOpen}>
           <DropdownMenuTrigger
-            render={<ActionBarItem variant="default" size="default" onSelect={keepSelection} />}
+            render={<ActionBarItem variant="brand-secondary" size="default" onSelect={keepSelection} />}
           >
             {isVerifyingEmails || isFindingPhones ? <Spinner /> : <IconBolt />}
             Enrich
@@ -133,10 +133,10 @@ export const LeadsActionBar: FC<LeadsActionBarProps> = ({
         <Action icon={<IconMessage2 />} label="Generate messages" onClick={onGenerateMessages} />
         <Action
           icon={isDeleting ? <Spinner /> : <IconTrash />}
-          label={isDeleting ? 'Deleting...' : 'Delete'}
+          label={isDeleting ? 'Deleting...' : 'Delete leads'}
           onClick={onDelete}
           disabled={isDeleting}
-          destructive
+          variant="destructive"
         />
       </ActionBarGroup>
     </ActionBar>

@@ -8,6 +8,15 @@ import { DataTableAdvancedToolbar } from '@/components/data-table/data-table-adv
 import { DataTableFilterMenu } from '@/components/data-table/data-table-filter-menu'
 import { DataTableSortMenu } from '@/components/data-table/data-table-sort-menu'
 import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { useDataTable } from '@/hooks/use-data-table'
 import { api } from '../api'
 import { getCountryCodesKey, getCountryOptions, getLeadsTableColumns, isPhoneSearchInProgress, Lead } from './leadsTableColumns'
@@ -22,6 +31,7 @@ const pluralizeLeads = (count: number) => (count === 1 ? '1 lead' : `${count} le
 export const LeadsList: FC = () => {
   const [isMessageModalOpen, setIsMessageModalOpen] = useState(false)
   const [isImportModalOpen, setIsImportModalOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [actionBarContainer, setActionBarContainer] = useState<HTMLDivElement | null>(null)
   const queryClient = useQueryClient()
 
@@ -146,6 +156,7 @@ export const LeadsList: FC = () => {
   })
 
   const handleDeleteSelected = () => {
+    setIsDeleteDialogOpen(false)
     if (selectedLeads.length > 0) {
       deleteLeadsMutation.mutate(selectedLeads)
     }
@@ -216,11 +227,28 @@ export const LeadsList: FC = () => {
         onFindPhones={() => enrichPhonesMutation.mutate(selectedLeads)}
         onGuessGender={() => toast.error('Gender guessing feature is not yet implemented')}
         onGenerateMessages={() => setIsMessageModalOpen(true)}
-        onDelete={handleDeleteSelected}
+        onDelete={() => setIsDeleteDialogOpen(true)}
         isVerifyingEmails={verifyEmailsMutation.isPending}
         isFindingPhones={enrichPhonesMutation.isPending}
         isDeleting={deleteLeadsMutation.isPending}
       />
+
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>
+              Delete {selectedLeads.length === 1 ? '1 lead' : `${selectedLeads.length} leads`}?
+            </DialogTitle>
+            <DialogDescription>This can't be undone.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
+            <Button variant="destructive" onClick={handleDeleteSelected}>
+              Delete leads
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <MessageTemplateModal
         isOpen={isMessageModalOpen}
