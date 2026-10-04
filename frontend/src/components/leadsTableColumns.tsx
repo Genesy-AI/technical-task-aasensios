@@ -46,7 +46,7 @@ const formatDate = (dateString: string) =>
 const EmailStatusBadge: FC<{ status: EmailStatus }> = ({ status }) => {
   if (status === 'verified') {
     return (
-      <Badge className="bg-green-100 text-green-800">
+      <Badge className="bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300">
         <IconCircleCheck data-icon="inline-start" aria-hidden />
         Verified
       </Badge>
@@ -222,7 +222,7 @@ export const getLeadsTableColumns = (
           rel="noopener noreferrer"
           title={lead.linkedinUrl}
           aria-label={`LinkedIn profile of ${fullName(lead)}`}
-          className="inline-flex text-blue-600 hover:text-blue-800"
+          className="inline-flex text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
         >
           <svg
             className="h-5 w-5"

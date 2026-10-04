@@ -1,9 +1,10 @@
 import { LeadsList } from './components/LeadsList'
+import { ThemeToggle } from './components/ThemeToggle'
 
 function App() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm border-b border-gray-200">
+    <div className="min-h-screen bg-muted/50 text-foreground">
+      <header className="bg-card shadow-sm border-b border-border">
         <div className="px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
@@ -13,9 +14,10 @@ function App() {
                   className="h-8 w-8 transition-all duration-300 hover:drop-shadow-[0_0_2em_#646cffaa]"
                   alt="Enginy AI logo"
                 />
-                <h1 className="ml-3 text-xl font-semibold text-gray-900">TinyEnginy</h1>
+                <h1 className="ml-3 text-xl font-semibold text-foreground">TinyEnginy</h1>
               </a>
             </div>
+            <ThemeToggle />
           </div>
         </div>
       </header>

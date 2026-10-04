@@ -15,13 +15,14 @@ export const Providers: FC<PropsWithChildren> = ({ children }) => {
         gutter={8}
         containerClassName="!top-5 !right-5"
         toastOptions={{
+          // The color classes are marked important (!) to beat react-hot-toast's inline background and color
           duration: 4000,
           className:
-            'bg-white/95 text-gray-700 border border-gray-200/30 rounded-xl shadow-xl backdrop-blur-md text-sm font-medium px-4 py-3 max-w-sm',
+            'bg-popover/95! text-popover-foreground! border border-border rounded-xl shadow-xl backdrop-blur-md text-sm font-medium px-4 py-3 max-w-sm',
           success: {
             duration: 3000,
             className:
-              'bg-green-50/95 text-emerald-700 border border-emerald-200/20 rounded-xl shadow-xl backdrop-blur-md text-sm font-medium px-4 py-3 max-w-sm',
+              'bg-green-50/95! text-emerald-700! border border-emerald-200/20 dark:bg-emerald-950/90! dark:text-emerald-300! dark:border-emerald-900 rounded-xl shadow-xl backdrop-blur-md text-sm font-medium px-4 py-3 max-w-sm',
             iconTheme: {
               primary: '#10b981',
               secondary: '#ffffff',
@@ -30,7 +31,7 @@ export const Providers: FC<PropsWithChildren> = ({ children }) => {
           error: {
             duration: 5000,
             className:
-              'bg-red-50/95 text-red-700 border border-red-200/20 rounded-xl shadow-xl backdrop-blur-md text-sm font-medium px-4 py-3 max-w-sm',
+              'bg-red-50/95! text-red-700! border border-red-200/20 dark:bg-red-950/90! dark:text-red-300! dark:border-red-900 rounded-xl shadow-xl backdrop-blur-md text-sm font-medium px-4 py-3 max-w-sm',
             iconTheme: {
               primary: '#ef4444',
               secondary: '#ffffff',
@@ -38,7 +39,7 @@ export const Providers: FC<PropsWithChildren> = ({ children }) => {
           },
           loading: {
             className:
-              'bg-gray-50/95 text-gray-600 border border-gray-200/30 rounded-xl shadow-xl backdrop-blur-md text-sm font-medium px-4 py-3 max-w-sm',
+              'bg-popover/95! text-muted-foreground! border border-border rounded-xl shadow-xl backdrop-blur-md text-sm font-medium px-4 py-3 max-w-sm',
             iconTheme: {
               primary: '#6b7280',
               secondary: '#ffffff',

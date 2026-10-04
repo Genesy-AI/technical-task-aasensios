@@ -260,18 +260,18 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
     >
       <div
         // Fixed height so the preview, warnings and results appearing don't resize the modal
-        className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 h-[min(90vh,36rem)] flex flex-col"
+        className="bg-card rounded-lg shadow-xl max-w-2xl w-full mx-4 h-[min(90vh,36rem)] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-6 flex flex-col flex-1 min-h-0">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">
+            <h2 className="text-xl font-semibold text-foreground">
               Generate Messages for {selectedLeadsCount} Lead{selectedLeadsCount !== 1 ? 's' : ''}
             </h2>
             <button
               onClick={handleClose}
               disabled={generateMessagesMutation.isPending}
-              className="text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
+              className="text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -283,7 +283,7 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
             {/* Pads the scroll area so focus rings aren't clipped */}
             <div className="flex-1 min-h-0 overflow-y-auto space-y-6 -mx-1 px-1 -mt-3 pt-3">
             <div>
-              <label htmlFor="message-template" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="message-template" className="block text-sm font-medium text-foreground mb-2">
                 Message Template
               </label>
               <div className="relative">
@@ -318,10 +318,10 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
                         ? `field-picker-${pickerOptions[activePickerOption].key}`
                         : undefined
                     }
-                    className="w-44 px-2 py-1 text-xs border border-gray-300 rounded placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50"
+                    className="w-44 px-2 py-1 text-xs border border-input rounded placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50"
                   />
                   {isFieldPickerOpen && (
-                    <div className="absolute right-0 mt-1 w-64 bg-white rounded-md shadow-lg z-10 border border-gray-200">
+                    <div className="absolute right-0 mt-1 w-64 bg-card rounded-md shadow-lg z-10 border border-border">
                       <div
                         id="field-picker-options"
                         role="listbox"
@@ -330,7 +330,7 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
                       >
                         {pickerGroups.map(({ group, fields }) => (
                           <div key={group} role="group" aria-label={GROUP_LABELS[group]}>
-                            <div className="px-3 pt-2 pb-1 text-xs font-semibold text-gray-500 uppercase" aria-hidden="true">
+                            <div className="px-3 pt-2 pb-1 text-xs font-semibold text-muted-foreground uppercase" aria-hidden="true">
                               {GROUP_LABELS[group]}
                             </div>
                             {fields.map((field) => {
@@ -349,18 +349,18 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
                                   }}
                                   onMouseEnter={() => setActivePickerOption(pickerOptions.indexOf(field))}
                                   className={`flex w-full items-center justify-between px-3 py-1.5 text-sm cursor-pointer ${
-                                    isActive ? 'bg-blue-50 text-blue-900' : 'text-gray-700'
+                                    isActive ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-900 dark:text-blue-200' : 'text-foreground'
                                   }`}
                                 >
                                   {field.label}
-                                  <span className="text-xs text-gray-400 font-mono">{`{${field.key}}`}</span>
+                                  <span className="text-xs text-muted-foreground font-mono">{`{${field.key}}`}</span>
                                 </div>
                               )
                             })}
                           </div>
                         ))}
                         {pickerOptions.length === 0 && (
-                          <div className="px-3 py-2 text-sm text-gray-500">No matching fields</div>
+                          <div className="px-3 py-2 text-sm text-muted-foreground">No matching fields</div>
                         )}
                       </div>
                     </div>
@@ -376,7 +376,7 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
                   onClick={syncCaret}
                   onBlur={() => setSuggestionsDismissed(true)}
                   placeholder="Enter your message template here. Type { to insert a lead field.&#10;&#10;Example: Hi {firstName}, I noticed you work at {companyName} as a {jobTitle}. Would you be interested in..."
-                  className="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                  className="w-full h-32 px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
                   role="combobox"
                   aria-autocomplete="list"
                   aria-expanded={suggestions.length > 0}
@@ -390,7 +390,7 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
                     id="field-suggestions"
                     role="listbox"
                     aria-label="Field suggestions"
-                    className="absolute left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white rounded-md shadow-lg z-10 border border-gray-200 py-1"
+                    className="absolute left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-card rounded-md shadow-lg z-10 border border-border py-1"
                   >
                     {suggestions.map((field, index) => (
                       <li
@@ -406,11 +406,11 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
                         }}
                         onMouseEnter={() => setActiveSuggestion(index)}
                         className={`flex items-center justify-between px-3 py-1.5 text-sm cursor-pointer ${
-                          index === activeSuggestion ? 'bg-blue-50 text-blue-900' : 'text-gray-700'
+                          index === activeSuggestion ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-900 dark:text-blue-200' : 'text-foreground'
                         }`}
                       >
                         {field.label}
-                        <span className="text-xs text-gray-400 font-mono">{`{${field.key}}`}</span>
+                        <span className="text-xs text-muted-foreground font-mono">{`{${field.key}}`}</span>
                       </li>
                     ))}
                   </ul>
@@ -419,12 +419,12 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
               {(unknownFields.length > 0 || missingFields.length > 0) && (
                 <ul className="mt-2 space-y-1 text-sm">
                   {unknownFields.map((key) => (
-                    <li key={key} className="text-red-600">
+                    <li key={key} className="text-red-600 dark:text-red-400">
                       Unknown field {`{${key}}`}
                     </li>
                   ))}
                   {missingFields.map(({ key, missing }) => (
-                    <li key={key} className="text-amber-700">
+                    <li key={key} className="text-amber-700 dark:text-amber-400">
                       ⚠ {`{${key}}`} is missing for {missing} of {selectedLeadsCount} lead{selectedLeadsCount !== 1 ? 's' : ''}
                       {' '}— no message will be generated for {missing === 1 ? 'it' : 'them'}
                     </li>
@@ -432,14 +432,14 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
                 </ul>
               )}
               {template.trim() && previewLead && (
-                <section aria-label="Preview" className="mt-3 rounded-md border border-gray-200 bg-gray-50 p-3">
-                  <h3 className="text-xs font-medium text-gray-500 mb-1">
+                <section aria-label="Preview" className="mt-3 rounded-md border border-border bg-muted/50 p-3">
+                  <h3 className="text-xs font-medium text-muted-foreground mb-1">
                     Preview — {`${previewLead.firstName} ${previewLead.lastName || ''}`.trim()}
                   </h3>
-                  <p className="text-sm text-gray-900 whitespace-pre-wrap">
+                  <p className="text-sm text-foreground whitespace-pre-wrap">
                     {renderPreview(template, previewLead).map((segment, index) =>
                       segment.missing ? (
-                        <mark key={index} className="bg-amber-100 text-amber-800 rounded px-0.5">
+                        <mark key={index} className="bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 rounded px-0.5">
                           {segment.text}
                         </mark>
                       ) : (
@@ -449,7 +449,7 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
                   </p>
                 </section>
               )}
-              <p className="mt-2 text-sm text-gray-500">
+              <p className="mt-2 text-sm text-muted-foreground">
                 Type {`{`} or use Insert field to add lead data. Leads missing a field you use won't get a
                 message.
               </p>
@@ -458,10 +458,10 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
             {generationResult && (
               <div className="space-y-4">
                 {generationResult.generatedCount > 0 && (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-900 rounded-lg p-4">
                     <div className="flex items-center">
                       <svg
-                        className="w-5 h-5 text-green-600 mr-3"
+                        className="w-5 h-5 text-green-600 dark:text-green-400 mr-3"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -473,7 +473,7 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
                           d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                         />
                       </svg>
-                      <span className="text-sm font-medium text-green-800">
+                      <span className="text-sm font-medium text-green-800 dark:text-green-300">
                         Successfully generated messages for {generationResult.generatedCount} lead
                         {generationResult.generatedCount !== 1 ? 's' : ''}
                       </span>
@@ -482,10 +482,10 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
                 )}
 
                 {generationResult.errors.length > 0 && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-lg p-4">
                     <div className="flex items-start">
                       <svg
-                        className="w-5 h-5 text-red-600 mr-3 mt-0.5 flex-shrink-0"
+                        className="w-5 h-5 text-red-600 dark:text-red-400 mr-3 mt-0.5 flex-shrink-0"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -498,13 +498,13 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
                         />
                       </svg>
                       <div className="flex-1">
-                        <h4 className="text-sm font-medium text-red-800 mb-2">
+                        <h4 className="text-sm font-medium text-red-800 dark:text-red-300 mb-2">
                           Failed to generate messages for {generationResult.errors.length} lead
                           {generationResult.errors.length !== 1 ? 's' : ''}:
                         </h4>
                         <div className="space-y-1">
                           {generationResult.errors.map((error, index) => (
-                            <div key={index} className="text-sm text-red-700">
+                            <div key={index} className="text-sm text-red-700 dark:text-red-400">
                               <span className="font-medium">{error.leadName}</span>: {error.error}
                             </div>
                           ))}

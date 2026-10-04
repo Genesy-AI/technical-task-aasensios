@@ -167,14 +167,14 @@ export const LeadsList: FC = () => {
 
   return (
     <div>
-      <h2 className="mb-4 text-lg font-semibold text-gray-900">Leads</h2>
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 px-6 py-4">
+      <h2 className="mb-4 text-lg font-semibold text-foreground">Leads</h2>
+      <div className="bg-card rounded-lg shadow-sm border border-border px-6 py-4">
         {leads.isError ? (
           <div className="text-center py-12">
-            <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-              <div className="text-red-800">
+            <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-lg p-6">
+              <div className="text-red-800 dark:text-red-300">
                 <h3 className="text-lg font-medium mb-2">Error loading leads</h3>
-                <div className="text-sm text-red-700">
+                <div className="text-sm text-red-700 dark:text-red-400">
                   {leads.error?.message || 'An unexpected error occurred'}
                 </div>
                 <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>
@@ -185,7 +185,7 @@ export const LeadsList: FC = () => {
           </div>
         ) : leadsData.length === 0 ? (
           <div className="text-center py-12">
-            <div className="text-gray-500">
+            <div className="text-muted-foreground">
               <div className="text-lg font-medium">No leads found</div>
               <div className="text-sm mt-1">Get started by importing your leads.</div>
             </div>

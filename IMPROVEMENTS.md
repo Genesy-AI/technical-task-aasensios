@@ -18,6 +18,9 @@
 - [x] [product] type straight into an "Insert field" search box instead of opening a menu first
 - [x] [product] consistent button sizes - every button uses the shared shadcn Button at 32px
 - [x] [product] Import CSV next to the table's View button, Leads heading above the card
+- [x] [product] tablecn advanced Sort and Filter menus - column/operator/value filter rows joined with and/or, both with a count badge
+- [x] [product] default to 10 rows per page
+- [x] [product] dark mode - follows the OS until toggled from the header, remembered across visits, applied before first paint
 - [x] [product] move email status from inline emoji to dedicated column
 - [x] [product] replace country codes with proper names
 - [x] [product] improve layout adaptability - table shuold be wider when zooming out
