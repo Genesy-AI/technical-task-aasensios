@@ -3,7 +3,7 @@
 import { type Column, type RowData, Subscribe, type Table } from '@tanstack/react-table'
 import { cn } from '@/lib/utils'
 import * as React from 'react'
-import { IconCalendar, IconGripVertical, IconListDetails, IconSelector, IconTrash } from '@tabler/icons-react'
+import { IconCalendar, IconGripVertical, IconFilter2, IconSelector, IconTrash } from '@tabler/icons-react'
 
 import type { DataTableFeatures } from '@/lib/data-table-features'
 import type { ColumnFilterItem, JoinOperator } from '@/lib/data-table-types'
@@ -176,7 +176,7 @@ function DataTableFilterMenuContent<TData extends RowData>({
         <PopoverTrigger
           render={<Button variant="outline" onKeyDown={onTriggerKeyDown} disabled={disabled} />}
         >
-          <IconListDetails className="text-muted-foreground" />
+          <IconFilter2 className="text-muted-foreground" />
           Filter
           {hasFilters && (
             <Badge variant="secondary" className="h-[18.24px] px-[5.12px] font-mono text-[10.4px]">

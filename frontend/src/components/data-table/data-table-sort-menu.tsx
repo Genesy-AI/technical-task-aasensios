@@ -9,7 +9,7 @@ import {
 } from '@tanstack/react-table'
 import { cn } from '@/lib/utils'
 import * as React from 'react'
-import { IconArrowsLeftRight, IconGripVertical, IconSelector, IconTrash } from '@tabler/icons-react'
+import { IconArrowsSort, IconGripVertical, IconSelector, IconTrash } from '@tabler/icons-react'
 
 import type { DataTableFeatures } from '@/lib/data-table-features'
 
@@ -168,7 +168,7 @@ function DataTableSortMenuContent<TData extends RowData>({
         <PopoverTrigger
           render={<Button variant="outline" onKeyDown={onTriggerKeyDown} disabled={disabled} />}
         >
-          <IconArrowsLeftRight className="text-muted-foreground" />
+          <IconArrowsSort className="text-muted-foreground" />
           Sort
           {sorting.length > 0 && (
             <Badge variant="secondary" className="h-[18.24px] px-[5.12px] font-mono text-[10.4px]">
