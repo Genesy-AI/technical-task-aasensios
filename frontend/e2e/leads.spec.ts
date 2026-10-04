@@ -176,18 +176,28 @@ test.describe('CSV import', () => {
 })
 
 test.describe('theme', () => {
-  test('switches to dark mode and remembers it', async ({ page, api }) => {
+  test('switches between light, dark and system, remembering the choice', async ({ page, api }) => {
     api.seed([makeLead(1, 'Ada', 'Lovelace')])
-    await page.emulateMedia({ colorScheme: 'light' })
+    await page.emulateMedia({ colorScheme: 'dark' })
     await page.goto('/')
     const html = page.locator('html')
+    const system = page.getByRole('button', { name: 'System theme' })
+
+    // Follows the OS until a theme is picked
+    await expect(system).toHaveAttribute('aria-pressed', 'true')
+    await expect(html).toHaveClass(/dark/)
+
+    await page.getByRole('button', { name: 'Light theme' }).click()
     await expect(html).not.toHaveClass(/dark/)
-
-    await page.getByRole('button', { name: 'Switch to dark mode' }).click()
-    await expect(html).toHaveClass(/dark/)
-
     await page.reload()
+    await expect(html).not.toHaveClass(/dark/)
+    await expect(page.getByRole('button', { name: 'Light theme' })).toHaveAttribute('aria-pressed', 'true')
+
+    await page.getByRole('button', { name: 'Dark theme' }).click()
     await expect(html).toHaveClass(/dark/)
-    await expect(page.getByRole('button', { name: 'Switch to light mode' })).toBeVisible()
+
+    await system.click()
+    await page.emulateMedia({ colorScheme: 'light' })
+    await expect(html).not.toHaveClass(/dark/)
   })
 })
