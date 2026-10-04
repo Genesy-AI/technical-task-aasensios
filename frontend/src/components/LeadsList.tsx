@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { FC, useState } from 'react'
 import toast from 'react-hot-toast'
 import { api } from '../api'
+import { countryName } from '../utils/countryCodes'
 import { LeadsGetManyOutput, PhoneSource } from '../api/types/leads/getMany'
 import { MessageTemplateModal } from './MessageTemplateModal'
 import { CsvImportModal } from './CsvImportModal'
@@ -11,6 +12,17 @@ const PHONE_SOURCE_LABELS: Record<PhoneSource, string> = {
   orion: 'Orion Connect',
   astra: 'Astra Dialer',
   nimbus: 'Nimbus Lookup',
+}
+
+const EmailStatusBadge: FC<{ emailVerified: boolean | null }> = ({ emailVerified }) => {
+  if (emailVerified === null) {
+    return <span className="text-sm text-gray-500">Not verified</span>
+  }
+  return emailVerified ? (
+    <span className="inline-flex px-2 py-0.5 text-xs font-medium text-green-800 bg-green-100 rounded-full">Verified</span>
+  ) : (
+    <span className="inline-flex px-2 py-0.5 text-xs font-medium text-red-800 bg-red-100 rounded-full">Invalid</span>
+  )
 }
 
 const PHONE_POLL_INTERVAL_MS = 2000
@@ -343,6 +355,9 @@ export const LeadsList: FC = () => {
                   Email
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
+                  Email Status
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
                   Phone
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
@@ -390,7 +405,10 @@ export const LeadsList: FC = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{lead.email || '-'} {lead.emailVerified === null ? '❓' : lead.emailVerified ? '✅' : '❌'}</div>
+                    <div className="text-sm text-gray-900">{lead.email || '-'}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <EmailStatusBadge emailVerified={lead.emailVerified} />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <PhoneCell lead={lead} />
@@ -423,7 +441,13 @@ export const LeadsList: FC = () => {
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{lead.countryCode || '-'}</div>
+                    {lead.countryCode ? (
+                      <div className="text-sm text-gray-900" title={lead.countryCode}>
+                        {countryName(lead.countryCode)}
+                      </div>
+                    ) : (
+                      <div className="text-sm text-gray-900">-</div>
+                    )}
                   </td>
                   <td className="px-6 py-4">
                     <div className="text-sm text-gray-900 max-w-xs truncate" title={lead.message || ''}>

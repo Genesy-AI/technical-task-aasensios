@@ -6,9 +6,9 @@
 - [ ] [security] remove axios - fetch web native api should be enough today
 - [x] [product] replace favicon and page title
 - [x] [product] fix icon alignment of Enrich > "Verify email" option
-- [ ] [product] move email status from inline emoji to dedicated column
-- [ ] [product] replace country codes with proper names
-- [ ] [product] improve layout adaptability - table shuold be wider when zooming out
+- [x] [product] move email status from inline emoji to dedicated column
+- [x] [product] replace country codes with proper names
+- [x] [product] improve layout adaptability - table shuold be wider when zooming out
 - [ ] [product] run lighthouse - improve the most impactful core web vitals
 - [ ] [product] push enrichment progress via SSE/websocket instead of polling the leads table
 - [ ] [product] normalize phone numbers to E.164 (providers return bare numbers; needs a reliable country source)

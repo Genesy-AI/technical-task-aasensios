@@ -177,6 +177,36 @@ describe('LeadsList new lead fields', () => {
   })
 })
 
+describe('LeadsList table columns', () => {
+  afterEach(() => {
+    cleanup()
+    vi.clearAllMocks()
+  })
+
+  it('shows email verification in its own column', async () => {
+    vi.mocked(api.leads.getMany).mockResolvedValue([
+      { ...makeLead(1, 'John', 'Doe'), emailVerified: true },
+      { ...makeLead(2, 'Jane', 'Smith'), emailVerified: false },
+      makeLead(3, 'Ann', 'Lee'),
+    ])
+    renderLeadsList()
+
+    expect(await screen.findByRole('columnheader', { name: /email status/i })).toBeInTheDocument()
+    expect(screen.getByText('Verified')).toBeInTheDocument()
+    expect(screen.getByText('Invalid')).toBeInTheDocument()
+    expect(screen.getByText('Not verified')).toBeInTheDocument()
+    expect(screen.queryByText(/[✅❌❓]/u)).not.toBeInTheDocument()
+  })
+
+  it('shows country names instead of codes, keeping the code as a tooltip', async () => {
+    vi.mocked(api.leads.getMany).mockResolvedValue([{ ...makeLead(1, 'John', 'Doe'), countryCode: 'ES' }])
+    renderLeadsList()
+
+    const country = await screen.findByText('Spain')
+    expect(country).toHaveAttribute('title', 'ES')
+  })
+})
+
 describe('LeadsList phone enrichment', () => {
   afterEach(() => {
     act(() => toast.remove())
