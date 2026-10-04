@@ -2,8 +2,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useSelector } from '@tanstack/react-store'
 import { FC, useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
+import { IconCloudUpload } from '@tabler/icons-react'
 import { DataTable } from '@/components/data-table/data-table'
 import { DataTableToolbar } from '@/components/data-table/data-table-toolbar'
+import { Button } from '@/components/ui/button'
 import { useDataTable } from '@/hooks/use-data-table'
 import { api } from '../api'
 import { getCountryCodesKey, getCountryOptions, getLeadsTableColumns, isPhoneSearchInProgress, Lead } from './leadsTableColumns'
@@ -154,26 +156,17 @@ export const LeadsList: FC = () => {
   }
 
 
-  return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-      <div className="px-6 py-4 border-b border-gray-200">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">Leads</h2>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setIsImportModalOpen(true)}
-              className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-            >
-              <svg className="-ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-              </svg>
-              Import CSV
-            </button>
-          </div>
-        </div>
-      </div>
+  const importCsvButton = (
+    <Button variant="outline" onClick={() => setIsImportModalOpen(true)}>
+      <IconCloudUpload data-icon="inline-start" />
+      Import CSV
+    </Button>
+  )
 
-      <div className="px-6 py-4">
+  return (
+    <div>
+      <h2 className="mb-4 text-lg font-semibold text-gray-900">Leads</h2>
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 px-6 py-4">
         {leads.isError ? (
           <div className="text-center py-12">
             <div className="bg-red-50 border border-red-200 rounded-lg p-6">
@@ -182,12 +175,9 @@ export const LeadsList: FC = () => {
                 <div className="text-sm text-red-700">
                   {leads.error?.message || 'An unexpected error occurred'}
                 </div>
-                <button
-                  onClick={() => window.location.reload()}
-                  className="mt-4 inline-flex items-center px-4 py-2 border border-red-300 text-sm font-medium rounded-md text-red-700 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
-                >
+                <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>
                   Refresh Page
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -195,12 +185,13 @@ export const LeadsList: FC = () => {
           <div className="text-center py-12">
             <div className="text-gray-500">
               <div className="text-lg font-medium">No leads found</div>
-              <div className="text-sm mt-1">Get started by adding your first lead.</div>
+              <div className="text-sm mt-1">Get started by importing your leads.</div>
             </div>
+            <div className="mt-4">{importCsvButton}</div>
           </div>
         ) : (
           <DataTable table={table}>
-            <DataTableToolbar table={table} />
+            <DataTableToolbar table={table}>{importCsvButton}</DataTableToolbar>
           </DataTable>
         )}
       </div>

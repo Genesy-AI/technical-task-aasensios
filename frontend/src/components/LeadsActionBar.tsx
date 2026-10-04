@@ -42,6 +42,7 @@ const Action: FC<{
 }> = ({ icon, label, onClick, disabled, destructive }) => (
   <ActionBarItem
     variant={destructive ? 'destructive' : 'secondary'}
+    size="default"
     disabled={disabled}
     onClick={onClick}
     onSelect={keepSelection}

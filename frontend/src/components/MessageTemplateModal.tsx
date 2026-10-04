@@ -7,6 +7,7 @@ import { LeadField, LeadFieldGroup } from '../api/types/leads/getFields'
 import { LeadsGetManyOutput } from '../api/types/leads/getMany'
 import { useLeadFields } from '../hooks/useLeadFields'
 import { findMissingFields, findUnknownFields, getAutocompleteMatch, renderPreview } from '../utils/messageTemplate'
+import { Button } from '@/components/ui/button'
 
 const GROUP_LABELS: Record<LeadFieldGroup, string> = {
   contact: 'Contact',
@@ -518,24 +519,18 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
             </div>
 
             <div className="flex justify-end space-x-3 pt-6">
-              <button
-                type="button"
-                onClick={handleClose}
-                disabled={generateMessagesMutation.isPending}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
+              <Button type="button" variant="outline" onClick={handleClose} disabled={generateMessagesMutation.isPending}>
                 {generationResult ? 'Close' : 'Cancel'}
-              </button>
+              </Button>
               {(!generationResult || generationResult.errors.length > 0) && (
-                <button
+                <Button
                   type="submit"
                   disabled={!template.trim() || unknownFields.length > 0 || generateMessagesMutation.isPending}
-                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   {generateMessagesMutation.isPending ? (
                     <>
                       <svg
-                        className="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline"
+                        className="animate-spin h-4 w-4"
                         xmlns="http://www.w3.org/2000/svg"
                         fill="none"
                         viewBox="0 0 24 24"
@@ -561,7 +556,7 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
                   ) : (
                     'Generate Messages'
                   )}
-                </button>
+                </Button>
               )}
             </div>
           </form>
