@@ -1,5 +1,4 @@
-import { AxiosResponse } from 'axios'
-import { axiosInstance } from '../utils/axios'
+import { request } from '../utils/http'
 
 export const MAX_UPLOAD_FILE_SIZE = 2 * 1024 * 1024
 
@@ -26,18 +25,7 @@ export function endpoint<Output, Input>(
   return async (body?: Input) => {
     const url = `${typeof urlBuilder === 'string' ? urlBuilder : urlBuilder(body!)}`
 
-    let res: AxiosResponse
-    if (method === 'get') {
-      res = await axiosInstance[method](url, { params: body })
-    } else {
-      res = await axiosInstance.request({
-        method,
-        url,
-        data: body,
-      })
-    }
-
-    return res.data as Output
+    return (await request(method, url, body)) as Output
   }
 }
 
