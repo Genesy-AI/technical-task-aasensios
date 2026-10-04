@@ -20,4 +20,22 @@ export const COUNTRY_CODES: ReadonlySet<string> = new Set([
 ])
 
 // Common non-ISO codes that unambiguously mean an ISO country
-export const COUNTRY_CODE_ALIASES: Readonly<Record<string, string>> = { UK: 'GB' }
+const COUNTRY_CODE_ALIASES: Readonly<Record<string, string>> = { UK: 'GB' }
+
+export const isValidCountryCode = (countryCode: string): boolean => COUNTRY_CODES.has(countryCode)
+
+// countryCode is optional, so an unrecognized value is dropped (stored as null)
+// rather than rejecting the whole lead; `dropped` lets callers report it
+export const normalizeCountryCode = (value: unknown): { countryCode: string | null; dropped: boolean } => {
+  if (value == null || (typeof value === 'string' && !value.trim())) {
+    return { countryCode: null, dropped: false }
+  }
+  if (typeof value !== 'string') {
+    return { countryCode: null, dropped: true }
+  }
+  const code = value.trim().toUpperCase()
+  const countryCode = COUNTRY_CODE_ALIASES[code] ?? code
+  return isValidCountryCode(countryCode)
+    ? { countryCode, dropped: false }
+    : { countryCode: null, dropped: true }
+}

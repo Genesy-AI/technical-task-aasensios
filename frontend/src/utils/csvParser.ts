@@ -1,5 +1,5 @@
 import Papa from 'papaparse'
-import { COUNTRY_CODES } from './countryCodes'
+import { COUNTRY_CODES, COUNTRY_CODE_ALIASES } from './countryCodes'
 
 export interface CsvLead {
   firstName: string
@@ -70,9 +70,11 @@ export const parseCsv = (content: string): CsvLead[] => {
         case 'jobtitle':
           lead.jobTitle = trimmedValue || undefined
           break
-        case 'countrycode':
-          lead.countryCode = trimmedValue.toUpperCase() || undefined
+        case 'countrycode': {
+          const code = trimmedValue.toUpperCase()
+          lead.countryCode = COUNTRY_CODE_ALIASES[code] ?? (code || undefined)
           break
+        }
         case 'companyname':
           lead.companyName = trimmedValue || undefined
           break

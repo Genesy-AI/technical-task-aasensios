@@ -4,6 +4,7 @@ import { Connection, Client } from '@temporalio/client'
 import { verifyEmailWorkflow } from './workflows'
 import { generateMessageFromTemplate } from './utils/messageGenerator'
 import { verifyLeadEmails } from './utils/emailVerifier'
+import { normalizeCountryCode } from './utils/countryCodes'
 import { runTemporalWorker } from './worker'
 const prisma = new PrismaClient()
 const app = express()
@@ -219,8 +220,10 @@ app.post('/leads/bulk', async (req: Request, res: Response) => {
 
     let importedCount = 0
     const errors: Array<{ lead: any; error: string }> = []
+    const droppedCountryCodes: Array<{ lead: any; countryCode: unknown }> = []
 
     for (const lead of uniqueLeads) {
+      const { countryCode, dropped } = normalizeCountryCode(lead.countryCode)
       try {
         await prisma.lead.create({
           data: {
@@ -228,11 +231,14 @@ app.post('/leads/bulk', async (req: Request, res: Response) => {
             lastName: lead.lastName.trim(),
             email: lead.email.trim(),
             jobTitle: lead.jobTitle ? lead.jobTitle.trim() : null,
-            countryCode: lead.countryCode ? lead.countryCode.trim() : null,
+            countryCode,
             companyName: lead.companyName ? lead.companyName.trim() : null,
           },
         })
         importedCount++
+        if (dropped) {
+          droppedCountryCodes.push({ lead, countryCode: lead.countryCode })
+        }
       } catch (error) {
         errors.push({
           lead: lead,
@@ -247,6 +253,7 @@ app.post('/leads/bulk', async (req: Request, res: Response) => {
       duplicatesSkipped: validLeads.length - uniqueLeads.length,
       invalidLeads: leads.length - validLeads.length,
       errors,
+      droppedCountryCodes,
     })
   } catch (error) {
     console.error('Error importing leads:', error)

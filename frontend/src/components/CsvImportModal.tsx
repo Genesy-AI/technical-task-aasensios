@@ -114,6 +114,9 @@ export const CsvImportModal: FC<CsvImportModalProps> = ({ isOpen, onClose }) => 
       if (data.invalidLeads > 0) {
         message += ` (${data.invalidLeads} invalid leads excluded)`
       }
+      if (data.droppedCountryCodes.length > 0) {
+        message += ` (${data.droppedCountryCodes.length} unrecognized country codes left empty)`
+      }
 
       toast.success(message)
       onClose()

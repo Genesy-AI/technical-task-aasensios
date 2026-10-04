@@ -18,4 +18,8 @@ export interface LeadsBulkImportOutput {
     lead: any
     error: string
   }>
+  droppedCountryCodes: Array<{
+    lead: any
+    countryCode: unknown
+  }>
 }

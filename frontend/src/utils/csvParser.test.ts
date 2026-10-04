@@ -255,6 +255,16 @@ Jim,Doe,jim@example.com,XX`
     result.forEach((lead) => expect(lead.errors).toEqual(['Invalid country code']))
   })
 
+  it('should map UK to GB', () => {
+    const csv = `firstName,lastName,email,countryCode
+John,Doe,john@example.com,uk`
+
+    const result = parseCsv(csv)
+
+    expect(result[0].countryCode).toBe('GB')
+    expect(result[0].isValid).toBe(true)
+  })
+
   it('should normalize country codes to uppercase', () => {
     const csv = `firstName,lastName,email,countryCode
 John,Doe,john@example.com,us`
