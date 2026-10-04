@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { api } from '../api'
 import { CsvLead, parseCsv } from '../utils/csvParser'
+import { useLeadFields } from '../hooks/useLeadFields'
 
 interface CsvImportModalProps {
   isOpen: boolean
@@ -16,6 +17,7 @@ export const CsvImportModal: FC<CsvImportModalProps> = ({ isOpen, onClose }) => 
   const [isProcessing, setIsProcessing] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const queryClient = useQueryClient()
+  const leadFields = useLeadFields()
 
   const stats = useMemo(() => {
     const validLeads = csvData.filter((lead) => lead.isValid)
@@ -43,6 +45,12 @@ export const CsvImportModal: FC<CsvImportModalProps> = ({ isOpen, onClose }) => 
   }, [csvData])
 
   const handleFileSelect = (file: File) => {
+    if (!leadFields.data) {
+      toast.error('Lead fields are still loading. Please try again in a moment.')
+      return
+    }
+    const fields = leadFields.data
+
     if (!file.name.endsWith('.csv')) {
       toast.error('Please select a CSV file')
       return
@@ -53,7 +61,7 @@ export const CsvImportModal: FC<CsvImportModalProps> = ({ isOpen, onClose }) => 
     reader.onload = (e) => {
       try {
         const content = e.target?.result as string
-        const parsed = parseCsv(content)
+        const parsed = parseCsv(content, fields)
         setCsvData(parsed)
         setIsProcessing(false)
       } catch (error) {
@@ -94,13 +102,10 @@ export const CsvImportModal: FC<CsvImportModalProps> = ({ isOpen, onClose }) => 
       const validLeads = leads.filter((lead) => lead.isValid)
 
       const leadsToImport = validLeads.map((lead) => ({
+        ...Object.fromEntries((leadFields.data ?? []).map((field) => [field.key, lead[field.key] || undefined])),
         firstName: lead.firstName,
         lastName: lead.lastName,
         email: lead.email,
-        jobTitle: lead.jobTitle || undefined,
-        countryCode: lead.countryCode || undefined,
-        companyName: lead.companyName || undefined,
-        phone: lead.phone || undefined,
       }))
 
       return api.leads.bulkImport({ leads: leadsToImport })
@@ -117,6 +122,9 @@ export const CsvImportModal: FC<CsvImportModalProps> = ({ isOpen, onClose }) => 
       }
       if (data.droppedCountryCodes.length > 0) {
         message += ` (${data.droppedCountryCodes.length} unrecognized country codes left empty)`
+      }
+      if (data.droppedValues.length > 0) {
+        message += ` (${data.droppedValues.length} invalid values left empty)`
       }
 
       toast.success(message)
@@ -240,10 +248,14 @@ export const CsvImportModal: FC<CsvImportModalProps> = ({ isOpen, onClose }) => 
                       browse
                     </button>
                   </p>
-                  <p className="text-sm text-gray-500">
-                    CSV must include: firstName, lastName, email (required). Optional: jobTitle, countryCode,
-                    companyName, phoneNumber
-                  </p>
+                  {leadFields.data && (
+                    <p className="text-sm text-gray-500">
+                      CSV must include:{' '}
+                      {leadFields.data.filter((field) => field.required).map((field) => field.csvHeaders[0]).join(', ')}{' '}
+                      (required). Optional:{' '}
+                      {leadFields.data.filter((field) => !field.required).map((field) => field.csvHeaders[0]).join(', ')}
+                    </p>
+                  )}
                 </div>
               )}
             </div>

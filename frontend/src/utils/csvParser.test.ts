@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { parseCsv, isValidEmail, isValidCountryCode } from './csvParser'
+import { leadFieldsFixture } from '../test/leadFields'
+
+const parse = (content: string) => parseCsv(content, leadFieldsFixture)
 
 describe('isValidEmail', () => {
   it('should return true for valid email addresses', () => {
@@ -41,39 +44,39 @@ describe('isValidCountryCode', () => {
 
 describe('parseCsv', () => {
   it('should throw error for empty content', () => {
-    expect(() => parseCsv('')).toThrow('CSV content cannot be empty')
-    expect(() => parseCsv('   ')).toThrow('CSV content cannot be empty')
+    expect(() => parse('')).toThrow('CSV content cannot be empty')
+    expect(() => parse('   ')).toThrow('CSV content cannot be empty')
   })
 
   it('should throw error for CSV with only headers', () => {
     const csv = 'firstName,lastName,email'
-    expect(() => parseCsv(csv)).toThrow('CSV file appears to be empty or contains no valid data')
+    expect(() => parse(csv)).toThrow('CSV file appears to be empty or contains no valid data')
   })
 
   it('should throw error for malformed CSV content', () => {
     const malformedCsv = `firstName,lastName,email
 "John,Doe,john@example.com,extra"field`
-    expect(() => parseCsv(malformedCsv)).toThrow('CSV parsing failed')
+    expect(() => parse(malformedCsv)).toThrow('CSV parsing failed')
   })
 
   it('should throw error for CSV with mismatched field count', () => {
     const mismatchedCsv = `firstName,lastName,email
 John,Doe,john@example.com,ExtraField,AnotherExtra
 Jane,Smith`
-    expect(() => parseCsv(mismatchedCsv)).toThrow('CSV parsing failed')
+    expect(() => parse(mismatchedCsv)).toThrow('CSV parsing failed')
   })
 
   it('should throw error for CSV with critical delimiter issues', () => {
     const noDelimiterCsv = `firstName lastName email
 John Doe john@example.com`
-    expect(() => parseCsv(noDelimiterCsv)).toThrow()
+    expect(() => parse(noDelimiterCsv)).toThrow()
   })
 
   it('should parse valid CSV with all required fields', () => {
     const csv = `firstName,lastName,email,jobTitle,countryCode,companyName
 John,Doe,john.doe@example.com,Developer,US,Tech Corp`
 
-    const result = parseCsv(csv)
+    const result = parse(csv)
 
     expect(result).toHaveLength(1)
     expect(result[0]).toEqual({
@@ -90,14 +93,41 @@ John,Doe,john.doe@example.com,Developer,US,Tech Corp`
   })
 
   it('should read the phone from a phoneNumber or phone column', () => {
-    const fromPhoneNumber = parseCsv('firstName,lastName,email,phoneNumber\nAda,Lovelace,ada@example.com, +1-280-754-0462x2154 ')
+    const fromPhoneNumber = parse('firstName,lastName,email,phoneNumber\nAda,Lovelace,ada@example.com, +1-280-754-0462x2154 ')
     expect(fromPhoneNumber[0].phone).toBe('+1-280-754-0462x2154')
 
-    const fromPhone = parseCsv('firstName,lastName,email,phone\nAda,Lovelace,ada@example.com,8577732848')
+    const fromPhone = parse('firstName,lastName,email,phone\nAda,Lovelace,ada@example.com,8577732848')
     expect(fromPhone[0].phone).toBe('8577732848')
 
-    const empty = parseCsv('firstName,lastName,email,phoneNumber\nAda,Lovelace,ada@example.com,')
+    const empty = parse('firstName,lastName,email,phoneNumber\nAda,Lovelace,ada@example.com,')
     expect(empty[0].phone).toBeUndefined()
+  })
+
+  it('should read years at company, including from the sample files yearsInRole column', () => {
+    expect(parse('firstName,lastName,email,yearsAtCompany\nAda,Lovelace,ada@example.com,4')[0].yearsAtCompany).toBe('4')
+    const fromSample = parse('firstName,lastName,email,yearsInRole\nAda,Lovelace,ada@example.com,0')[0]
+    expect(fromSample.yearsAtCompany).toBe('0')
+    expect(fromSample.isValid).toBe(true)
+  })
+
+  it('should flag years at company that are not a whole number of years', () => {
+    const [lead] = parse('firstName,lastName,email,yearsAtCompany\nAda,Lovelace,ada@example.com,2.5')
+    expect(lead.isValid).toBe(false)
+    expect(lead.errors).toContain('Invalid years at company')
+  })
+
+  it('should read LinkedIn profile URLs and flag anything else', () => {
+    const csv = 'firstName,lastName,email,linkedin\nAda,Lovelace,ada@example.com,linkedin.com/in/ada\nBob,Ray,bob@example.com,https://www.linkedin.com/company/enginy'
+    const [ada, bob] = parse(csv)
+    expect(ada.linkedinUrl).toBe('linkedin.com/in/ada')
+    expect(ada.isValid).toBe(true)
+    expect(bob.errors).toContain('Invalid LinkedIn URL')
+  })
+
+  it('should ignore columns that are not lead fields', () => {
+    const [lead] = parse('firstName,lastName,email,favouriteColour\nAda,Lovelace,ada@example.com,blue')
+    expect(lead.isValid).toBe(true)
+    expect(lead).not.toHaveProperty('favouriteColour')
   })
 
   it('should handle missing required fields and mark as invalid', () => {
@@ -106,7 +136,7 @@ John,Doe,john.doe@example.com,Developer,US,Tech Corp`
 John,,john@example.com
 John,Smith,`
 
-    const result = parseCsv(csv)
+    const result = parse(csv)
 
     expect(result).toHaveLength(3)
 
@@ -125,7 +155,7 @@ John,Smith,`
 John,Doe,invalid-email
 Jane,Smith,jane@example.com`
 
-    const result = parseCsv(csv)
+    const result = parse(csv)
 
     expect(result).toHaveLength(2)
     expect(result[0].isValid).toBe(false)
@@ -137,7 +167,7 @@ Jane,Smith,jane@example.com`
     const csv = `firstName,lastName,email,jobTitle
 "John","Doe","john.doe@example.com","Software Engineer"`
 
-    const result = parseCsv(csv)
+    const result = parse(csv)
 
     expect(result).toHaveLength(1)
     expect(result[0].firstName).toBe('John')
@@ -152,7 +182,7 @@ John,Doe,john@example.com
 ,,
 Jane,Smith,jane@example.com`
 
-    const result = parseCsv(csv)
+    const result = parse(csv)
 
     expect(result).toHaveLength(2)
     expect(result[0].firstName).toBe('John')
@@ -163,7 +193,7 @@ Jane,Smith,jane@example.com`
     const csv = `FIRSTNAME,LASTNAME,EMAIL,JOBTITLE,COUNTRYCODE,COMPANYNAME
 John,Doe,john@example.com,Developer,US,Tech Corp`
 
-    const result = parseCsv(csv)
+    const result = parse(csv)
 
     expect(result).toHaveLength(1)
     expect(result[0].firstName).toBe('John')
@@ -176,7 +206,7 @@ John,Doe,john@example.com,Developer,US,Tech Corp`
     const csv = `firstName,lastName,email,jobTitle,countryCode
 John,Doe,john@example.com,,`
 
-    const result = parseCsv(csv)
+    const result = parse(csv)
 
     expect(result).toHaveLength(1)
     expect(result[0].jobTitle).toBeUndefined()
@@ -190,7 +220,7 @@ John,Doe,john@example.com
 Jane,Smith,jane@example.com
 Bob,Johnson,bob@example.com`
 
-    const result = parseCsv(csv)
+    const result = parse(csv)
 
     expect(result).toHaveLength(3)
     expect(result[0].rowIndex).toBe(2)
@@ -202,7 +232,7 @@ Bob,Johnson,bob@example.com`
     const csv = `firstName,lastName,email
  , ,invalid-email`
 
-    const result = parseCsv(csv)
+    const result = parse(csv)
 
     expect(result).toHaveLength(1)
     expect(result[0].isValid).toBe(false)
@@ -216,7 +246,7 @@ Bob,Johnson,bob@example.com`
     const csv = `firstName,lastName,email,unknownColumn
 John,Doe,john@example.com,someValue`
 
-    const result = parseCsv(csv)
+    const result = parse(csv)
 
     expect(result).toHaveLength(1)
     expect(result[0].firstName).toBe('John')
@@ -231,7 +261,7 @@ John,Doe,john@example.com
 ,Smith,invalid-email
 Jane,Johnson,jane@example.com`
 
-    const result = parseCsv(csv)
+    const result = parse(csv)
 
     expect(result).toHaveLength(3)
     expect(result[0].isValid).toBe(true)
@@ -245,7 +275,7 @@ Jane,Johnson,jane@example.com`
     const csv = `firstName,lastName,email
  John , Doe , john@example.com `
 
-    const result = parseCsv(csv)
+    const result = parse(csv)
 
     expect(result).toHaveLength(1)
     expect(result[0].firstName).toBe('John')
@@ -260,7 +290,7 @@ John,Doe,john@example.com,XXX
 Jane,Doe,jane@example.com,12
 Jim,Doe,jim@example.com,XX`
 
-    const result = parseCsv(csv)
+    const result = parse(csv)
 
     expect(result.map((lead) => lead.isValid)).toEqual([false, false, false])
     result.forEach((lead) => expect(lead.errors).toEqual(['Invalid country code']))
@@ -270,7 +300,7 @@ Jim,Doe,jim@example.com,XX`
     const csv = `firstName,lastName,email,countryCode
 John,Doe,john@example.com,uk`
 
-    const result = parseCsv(csv)
+    const result = parse(csv)
 
     expect(result[0].countryCode).toBe('GB')
     expect(result[0].isValid).toBe(true)
@@ -280,7 +310,7 @@ John,Doe,john@example.com,uk`
     const csv = `firstName,lastName,email,countryCode
 John,Doe,john@example.com,us`
 
-    const result = parseCsv(csv)
+    const result = parse(csv)
 
     expect(result[0].countryCode).toBe('US')
     expect(result[0].isValid).toBe(true)

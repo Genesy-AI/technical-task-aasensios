@@ -1,13 +1,11 @@
+import { LeadFieldKey } from './getFields'
+
 export interface LeadsBulkImportInput {
-  leads: {
+  leads: ({
     firstName: string
     lastName: string
     email: string
-    jobTitle?: string
-    countryCode?: string
-    companyName?: string
-    phone?: string
-  }[]
+  } & Partial<Record<LeadFieldKey, string>>)[]
 }
 
 export interface LeadsBulkImportOutput {
@@ -22,5 +20,10 @@ export interface LeadsBulkImportOutput {
   droppedCountryCodes: Array<{
     lead: any
     countryCode: unknown
+  }>
+  droppedValues: Array<{
+    lead: any
+    field: LeadFieldKey
+    value: unknown
   }>
 }

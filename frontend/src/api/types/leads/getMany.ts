@@ -19,4 +19,6 @@ export type LeadsGetManyOutput = {
   phone: string | null
   phoneSource: PhoneSource | null
   phoneEnrichmentStatus: PhoneEnrichmentStatus | null
+  yearsAtCompany: number | null
+  linkedinUrl: string | null
 }[]

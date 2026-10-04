@@ -7,11 +7,13 @@ import { LeadsGetOneInput, LeadsGetOneOutput } from '../types/leads/getOne'
 import { LeadsUpdateInput, LeadsUpdateOutput } from '../types/leads/update'
 import { LeadsBulkImportInput, LeadsBulkImportOutput } from '../types/leads/bulkImport'
 import { LeadsVerifyEmailsInput, LeadsVerifyEmailsOutput } from '../types/leads/verifyEmails'
+import { LeadFieldsGetInput, LeadFieldsGetOutput } from '../types/leads/getFields'
 import { LeadsEnrichPhonesInput, LeadsEnrichPhonesOutput } from '../types/leads/enrichPhones'
 import { ApiModule, endpoint } from '../utils'
 
 export const leadsApi = {
   getMany: endpoint<LeadsGetManyOutput, LeadsGetManyInput>('get', '/leads'),
+  getFields: endpoint<LeadFieldsGetOutput, LeadFieldsGetInput>('get', '/leads/fields'),
   getOne: endpoint<LeadsGetOneOutput, LeadsGetOneInput>('get', ({ id }) => `/leads/${id}`),
   create: endpoint<LeadsCreateOutput, LeadsCreateInput>('post', '/leads'),
   delete: endpoint<LeadsDeleteOutput, LeadsDeleteInput>('delete', ({ id }) => `/leads/${id}`),

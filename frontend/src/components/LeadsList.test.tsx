@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { api } from '../api'
 import { LeadsVerifyEmailsOutput } from '../api/types/leads/verifyEmails'
 import { LeadsList } from './LeadsList'
+import { leadFieldsFixture } from '../test/leadFields'
 
 vi.mock('../api', () => ({
   api: {
@@ -13,6 +14,7 @@ vi.mock('../api', () => ({
       deleteMany: vi.fn(),
       verifyEmails: vi.fn(),
       enrichPhones: vi.fn(),
+      getFields: vi.fn(),
     },
   },
 }))
@@ -32,6 +34,8 @@ const makeLead = (id: number, firstName: string, lastName: string) => ({
   phone: null,
   phoneSource: null,
   phoneEnrichmentStatus: null,
+  yearsAtCompany: null,
+  linkedinUrl: null,
 })
 
 const renderLeadsList = () =>
@@ -144,6 +148,32 @@ describe('LeadsList email verification feedback', () => {
     expect(screen.queryByText(successToast)).not.toBeInTheDocument()
     // Dismissed toasts stay mounted briefly for their exit animation
     await waitFor(() => expect(screen.queryByText(/^Verifying/)).not.toBeInTheDocument(), { timeout: 2000 })
+  })
+})
+
+beforeEach(() => {
+  vi.mocked(api.leads.getFields).mockResolvedValue(leadFieldsFixture)
+})
+
+describe('LeadsList new lead fields', () => {
+  afterEach(() => {
+    cleanup()
+    vi.clearAllMocks()
+  })
+
+  it('shows years at company and links to the LinkedIn profile', async () => {
+    vi.mocked(api.leads.getMany).mockResolvedValue([
+      { ...makeLead(1, 'John', 'Doe'), yearsAtCompany: 0, linkedinUrl: 'https://www.linkedin.com/in/john-doe' },
+      makeLead(2, 'Jane', 'Smith'),
+    ])
+    renderLeadsList()
+
+    expect(await screen.findByRole('columnheader', { name: /years at company/i })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: /linkedin/i })).toBeInTheDocument()
+    expect(screen.getByText('0')).toBeInTheDocument()
+    const link = screen.getByRole('link', { name: /linkedin profile of john doe/i })
+    expect(link).toHaveAttribute('href', 'https://www.linkedin.com/in/john-doe')
+    expect(link).toHaveAttribute('target', '_blank')
   })
 })
 

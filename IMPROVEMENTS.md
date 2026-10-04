@@ -16,6 +16,7 @@
 - [ ] [product] provider rate limits - per-provider task queues + worker `maxTaskQueueActivitiesPerSecond` once providers publish limits
 - [ ] [product] optimize performance
 - [ ] [product] improve observability
+- [ ] [product] prevent losing the draft message when clicking away by mistake
 - [ ] [chore] bump prisma - error in @backend/prisma/schema.prisma
 - [ ] [chore] bump pnpm
 - [ ] [chore] bump nodejs

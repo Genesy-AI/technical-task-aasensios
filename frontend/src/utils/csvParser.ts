@@ -1,18 +1,16 @@
 import Papa from 'papaparse'
 import { COUNTRY_CODES, COUNTRY_CODE_ALIASES } from './countryCodes'
+import { LeadField, LeadFieldKey } from '../api/types/leads/getFields'
 
-export interface CsvLead {
+// firstName/lastName/email are always present; any other registry field appears when its column does
+export type CsvLead = {
   firstName: string
   lastName: string
   email: string
-  jobTitle?: string
-  countryCode?: string
-  companyName?: string
-  phone?: string
   isValid: boolean
   errors: string[]
   rowIndex: number
-}
+} & Partial<Record<Exclude<LeadFieldKey, 'firstName' | 'lastName' | 'email'>, string>>
 
 export const isValidEmail = (email: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -21,7 +19,37 @@ export const isValidEmail = (email: string): boolean => {
 
 export const isValidCountryCode = (countryCode: string): boolean => COUNTRY_CODES.has(countryCode)
 
-export const parseCsv = (content: string): CsvLead[] => {
+// Same rules the backend applies on import (backend/src/leadFields.ts); checked here so the preview flags them
+const MAX_YEARS_AT_COMPANY = 80
+const isValidYears = (value: string) => /^\d+$/.test(value) && Number(value) <= MAX_YEARS_AT_COMPANY
+const LINKEDIN_PROFILE = /^(?:https?:\/\/)?(?:[a-z]{2,3}\.)?linkedin\.com\/in\/[^/?#\s]+\/?(?:[?#].*)?$/i
+
+const normalizeHeader = (header: string) => header.toLowerCase().replace(/[^a-z]/g, '')
+
+const normalizeValue = (field: LeadField, value: string): string => {
+  if (field.type === 'countryCode') {
+    const code = value.toUpperCase()
+    return COUNTRY_CODE_ALIASES[code] ?? code
+  }
+  return value
+}
+
+const validationError = (field: LeadField, value: string): string | null => {
+  switch (field.type) {
+    case 'email':
+      return isValidEmail(value) ? null : 'Invalid email format'
+    case 'countryCode':
+      return isValidCountryCode(value) ? null : 'Invalid country code'
+    case 'integer':
+      return isValidYears(value) ? null : `Invalid ${field.label.toLowerCase()}`
+    case 'url':
+      return LINKEDIN_PROFILE.test(value) ? null : `Invalid ${field.label} URL`
+    default:
+      return null
+  }
+}
+
+export const parseCsv = (content: string, fields: LeadField[]): CsvLead[] => {
   if (!content?.trim()) {
     throw new Error('CSV content cannot be empty')
   }
@@ -47,69 +75,45 @@ export const parseCsv = (content: string): CsvLead[] => {
     throw new Error('CSV file appears to be empty or contains no valid data')
   }
 
+  const fieldsByHeader = new Map(
+    fields.flatMap((field) => field.csvHeaders.map((header) => [normalizeHeader(header), field] as const))
+  )
+
   const data: CsvLead[] = []
 
   parseResult.data.forEach((row, index) => {
     if (Object.values(row).every((value) => !value)) return
 
-    const lead: Partial<CsvLead> = { rowIndex: index + 2 }
+    const values: Partial<Record<LeadFieldKey, string>> = {}
 
     Object.entries(row).forEach(([header, value]) => {
-      const normalizedHeader = header.toLowerCase().replace(/[^a-z]/g, '')
+      const field = fieldsByHeader.get(normalizeHeader(header))
       const trimmedValue = value?.trim() || ''
-
-      switch (normalizedHeader) {
-        case 'firstname':
-          lead.firstName = trimmedValue
-          break
-        case 'lastname':
-          lead.lastName = trimmedValue
-          break
-        case 'email':
-          lead.email = trimmedValue
-          break
-        case 'jobtitle':
-          lead.jobTitle = trimmedValue || undefined
-          break
-        case 'countrycode': {
-          const code = trimmedValue.toUpperCase()
-          lead.countryCode = COUNTRY_CODE_ALIASES[code] ?? (code || undefined)
-          break
-        }
-        case 'companyname':
-          lead.companyName = trimmedValue || undefined
-          break
-        case 'phone':
-        case 'phonenumber':
-          lead.phone = trimmedValue || undefined
-          break
+      if (field && trimmedValue) {
+        values[field.key] = normalizeValue(field, trimmedValue)
       }
     })
 
     const errors: string[] = []
-    if (!lead.firstName?.trim()) {
-      errors.push('First name is required')
-    }
-    if (!lead.lastName?.trim()) {
-      errors.push('Last name is required')
-    }
-    if (!lead.email?.trim()) {
-      errors.push('Email is required')
-    } else if (!isValidEmail(lead.email)) {
-      errors.push('Invalid email format')
-    }
-    if (lead.countryCode && !isValidCountryCode(lead.countryCode)) {
-      errors.push('Invalid country code')
+    for (const field of fields) {
+      const value = values[field.key]
+      if (!value) {
+        if (field.required) errors.push(`${field.label} is required`)
+        continue
+      }
+      const error = validationError(field, value)
+      if (error) errors.push(error)
     }
 
     data.push({
-      ...lead,
-      firstName: lead.firstName || '',
-      lastName: lead.lastName || '',
-      email: lead.email || '',
+      ...values,
+      firstName: values.firstName || '',
+      lastName: values.lastName || '',
+      email: values.email || '',
+      rowIndex: index + 2,
       isValid: errors.length === 0,
       errors,
-    } as CsvLead)
+    })
   })
 
   return data
