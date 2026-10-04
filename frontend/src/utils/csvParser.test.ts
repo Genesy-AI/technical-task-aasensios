@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseCsv, isValidEmail } from './csvParser'
+import { parseCsv, isValidEmail, isValidCountryCode } from './csvParser'
 
 describe('isValidEmail', () => {
   it('should return true for valid email addresses', () => {
@@ -17,6 +17,25 @@ describe('isValidEmail', () => {
     expect(isValidEmail('test.example.com')).toBe(false)
     expect(isValidEmail('test@.com')).toBe(false)
     expect(isValidEmail('test@example')).toBe(false)
+  })
+})
+
+describe('isValidCountryCode', () => {
+  it('should return true for ISO 3166-1 alpha-2 codes', () => {
+    expect(isValidCountryCode('US')).toBe(true)
+    expect(isValidCountryCode('ES')).toBe(true)
+    expect(isValidCountryCode('GB')).toBe(true)
+    expect(isValidCountryCode('TV')).toBe(true)
+  })
+
+  it('should return false for anything else', () => {
+    expect(isValidCountryCode('')).toBe(false)
+    expect(isValidCountryCode('XXX')).toBe(false)
+    expect(isValidCountryCode('12')).toBe(false)
+    expect(isValidCountryCode('XX')).toBe(false)
+    expect(isValidCountryCode('UK')).toBe(false)
+    expect(isValidCountryCode('us')).toBe(false)
+    expect(isValidCountryCode('USA')).toBe(false)
   })
 })
 
@@ -221,6 +240,28 @@ Jane,Johnson,jane@example.com`
     expect(result[0].firstName).toBe('John')
     expect(result[0].lastName).toBe('Doe')
     expect(result[0].email).toBe('john@example.com')
+    expect(result[0].isValid).toBe(true)
+  })
+
+  it('should reject invalid country codes', () => {
+    const csv = `firstName,lastName,email,countryCode
+John,Doe,john@example.com,XXX
+Jane,Doe,jane@example.com,12
+Jim,Doe,jim@example.com,XX`
+
+    const result = parseCsv(csv)
+
+    expect(result.map((lead) => lead.isValid)).toEqual([false, false, false])
+    result.forEach((lead) => expect(lead.errors).toEqual(['Invalid country code']))
+  })
+
+  it('should normalize country codes to uppercase', () => {
+    const csv = `firstName,lastName,email,countryCode
+John,Doe,john@example.com,us`
+
+    const result = parseCsv(csv)
+
+    expect(result[0].countryCode).toBe('US')
     expect(result[0].isValid).toBe(true)
   })
 })
