@@ -37,17 +37,37 @@ export const LeadsList: FC = () => {
 
   const verifyEmailsMutation = useMutation({
     mutationFn: async (ids: number[]) => api.leads.verifyEmails({ leadIds: ids }),
+    onMutate: (ids) => {
+      setIsEnrichDropdownOpen(false)
+      toast.loading(ids.length === 1 ? 'Verifying 1 email...' : `Verifying ${ids.length} emails...`, {
+        id: 'verify-emails',
+      })
+    },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['leads', 'getMany'] })
-      setIsEnrichDropdownOpen(false)
-      toast.success(
-        data.verifiedCount === 1
-          ? `Verified ${data.verifiedCount} email`
-          : `Verified ${data.verifiedCount} emails`
-      )
+      // verifiedCount counts completed checks, including invalid emails, so split results by outcome
+      const validCount = data.results.filter(result => result.emailVerified).length
+      const invalidLeadIds = data.results.filter(result => !result.emailVerified).map(result => result.leadId)
+
+      if (validCount > 0) {
+        toast.success(validCount === 1 ? '1 valid email' : `${validCount} valid emails`, { id: 'verify-emails' })
+      } else {
+        toast.dismiss('verify-emails')
+      }
+      if (invalidLeadIds.length > 0) {
+        const names = invalidLeadIds
+          .map(leadId => leads.data?.find(lead => lead.id === leadId))
+          .map(lead => (lead ? `${lead.firstName} ${lead.lastName || ''}`.trim() : 'unknown lead'))
+          .join(', ')
+        toast.error(`Invalid ${invalidLeadIds.length === 1 ? 'email' : 'emails'} for: ${names}`)
+      }
+      if (data.errors.length > 0) {
+        const names = data.errors.map(error => error.leadName).join(', ')
+        toast.error(`Could not verify ${data.errors.length === 1 ? 'email' : 'emails'} for: ${names}`)
+      }
     },
     onError: () => {
-      toast.error('Failed to verify emails. Please try again.')
+      toast.error('Failed to verify emails. Please try again.', { id: 'verify-emails' })
     }
   })
 
@@ -149,7 +169,8 @@ export const LeadsList: FC = () => {
                     </button>
                     <button
                       onClick={() => verifyEmailsMutation.mutate(selectedLeads)}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                      disabled={verifyEmailsMutation.isPending}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       <div className="flex items-center">
                         <svg className="mr-3 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
