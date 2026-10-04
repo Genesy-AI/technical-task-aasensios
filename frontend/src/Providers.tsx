@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import { NuqsAdapter } from 'nuqs/adapters/react'
 import { FC, PropsWithChildren } from 'react'
 import { Toaster } from 'react-hot-toast'
 
@@ -45,7 +46,7 @@ export const Providers: FC<PropsWithChildren> = ({ children }) => {
           },
         }}
       />
-      {children}
+      <NuqsAdapter>{children}</NuqsAdapter>
     </QueryClientProvider>
   )
 }

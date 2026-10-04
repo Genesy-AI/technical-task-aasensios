@@ -12,3 +12,6 @@ window.matchMedia ??= (query: string) =>
     removeEventListener: () => {},
     dispatchEvent: () => false,
   }) as MediaQueryList
+
+// jsdom lacks PointerEvent; Base UI dispatches one when a checkbox is clicked
+window.PointerEvent ??= class PointerEvent extends MouseEvent {} as typeof window.PointerEvent

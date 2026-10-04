@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { NuqsTestingAdapter } from 'nuqs/adapters/testing'
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import toast, { Toaster } from 'react-hot-toast'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -42,7 +43,9 @@ const renderLeadsList = () =>
   render(
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
       <Toaster />
-      <LeadsList />
+      <NuqsTestingAdapter>
+        <LeadsList />
+      </NuqsTestingAdapter>
     </QueryClientProvider>
   )
 
