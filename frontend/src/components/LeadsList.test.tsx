@@ -313,5 +313,7 @@ describe('LeadsList pagination', () => {
     await new Promise((resolve) => setTimeout(resolve, 100))
     expect(window.location.search).toContain('page=2')
     expect(screen.getAllByRole('checkbox', { name: /^select lead/i })).toHaveLength(5)
+    // The short last page is padded to a full page so the pagination below does not move
+    expect(document.querySelectorAll('tbody tr')).toHaveLength(20)
   })
 })

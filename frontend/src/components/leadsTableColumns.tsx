@@ -56,10 +56,11 @@ const EmailStatusBadge: FC<{ status: EmailStatus }> = ({ status }) => {
 const PhoneCell: FC<{ lead: Lead }> = ({ lead }) => {
   if (lead.phone) {
     return (
+      // Tight line heights keep the two lines inside the fixed table row height
       <>
-        <div>{lead.phone}</div>
+        <div className="leading-4">{lead.phone}</div>
         {lead.phoneSource && (
-          <div className="text-xs text-muted-foreground">
+          <div className="text-xs leading-4 text-muted-foreground">
             via {PHONE_SOURCE_LABELS[lead.phoneSource] ?? lead.phoneSource}
           </div>
         )}

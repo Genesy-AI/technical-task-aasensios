@@ -16,6 +16,9 @@ import { getColumnPinningStyle, getColumnSizingStyle } from '@/lib/data-table-ut
 import { DataTablePagination } from '@/components/data-table/data-table-pagination'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 
+// Every body row gets the same height so paging never shifts the layout; cells must fit within it
+const ROW_HEIGHT_CLASS_NAME = 'h-12'
+
 const PINNED_CELL_CLASS_NAME = cn(
   'bg-background transition-colors',
   'group-hover/row:bg-[color-mix(in_srgb,var(--muted)_50%,var(--background))]',
@@ -138,10 +141,22 @@ function DataTableBody<TData extends RowData>({ table }: DataTableBodyProps<TDat
     )
   }
 
+  // Pad a short last page so the table, and the pagination below it, keep their height across pages
+  const fillerRowCount = table.getPageCount() > 1 ? table.store.state.pagination.pageSize - rows.length : 0
+
   return (
     <TableBody>
       {rows.map((row) => (
         <MemoizedDataTableRow key={row.id} row={row} />
+      ))}
+      {Array.from({ length: fillerRowCount }, (_, index) => (
+        <TableRow
+          key={`filler-${index}`}
+          aria-hidden
+          className={cn(ROW_HEIGHT_CLASS_NAME, 'border-0 hover:bg-transparent')}
+        >
+          <TableCell colSpan={table.getVisibleLeafColumns().length || 1} />
+        </TableRow>
       ))}
     </TableBody>
   )
@@ -164,7 +179,7 @@ function DataTableRow<TData extends RowData>({ row }: DataTableRowProps<TData>) 
       {() => {
         const cells = row.getVisibleCells().map((cell) => ({
           cell,
-          className: cn('overflow-hidden', cell.column.getIsPinned() && PINNED_CELL_CLASS_NAME),
+          className: cn('overflow-hidden py-1.5', cell.column.getIsPinned() && PINNED_CELL_CLASS_NAME),
           style: getColumnPinningStyle(cell.column),
         }))
 
@@ -174,7 +189,10 @@ function DataTableRow<TData extends RowData>({ row }: DataTableRowProps<TData>) 
             selector={(selection) => selection[row.id] === true}
           >
             {(isSelected) => (
-              <TableRow data-state={isSelected ? 'selected' : undefined} className="group/row">
+              <TableRow
+                data-state={isSelected ? 'selected' : undefined}
+                className={cn('group/row', ROW_HEIGHT_CLASS_NAME)}
+              >
                 {cells.map(({ cell, className, style }) => (
                   <TableCell key={cell.id} className={className} style={style}>
                     <FlexRender cell={cell} />
