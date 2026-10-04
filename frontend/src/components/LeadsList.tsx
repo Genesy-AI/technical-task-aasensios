@@ -9,6 +9,7 @@ import { api } from '../api'
 import { getCountryCodesKey, getCountryOptions, getLeadsTableColumns, isPhoneSearchInProgress, Lead } from './leadsTableColumns'
 import { MessageTemplateModal } from './MessageTemplateModal'
 import { CsvImportModal } from './CsvImportModal'
+import { LeadsActionBar } from './LeadsActionBar'
 
 const PHONE_POLL_INTERVAL_MS = 2000
 
@@ -16,7 +17,6 @@ const pluralizeLeads = (count: number) => (count === 1 ? '1 lead' : `${count} le
 
 export const LeadsList: FC = () => {
   const [isMessageModalOpen, setIsMessageModalOpen] = useState(false)
-  const [isEnrichDropdownOpen, setIsEnrichDropdownOpen] = useState(false)
   const [isImportModalOpen, setIsImportModalOpen] = useState(false)
   const queryClient = useQueryClient()
 
@@ -79,7 +79,6 @@ export const LeadsList: FC = () => {
   const verifyEmailsMutation = useMutation({
     mutationFn: async (ids: number[]) => api.leads.verifyEmails({ leadIds: ids }),
     onMutate: (ids) => {
-      setIsEnrichDropdownOpen(false)
       toast.loading(ids.length === 1 ? 'Verifying 1 email...' : `Verifying ${ids.length} emails...`, {
         id: 'verify-emails',
       })
@@ -114,9 +113,6 @@ export const LeadsList: FC = () => {
 
   const enrichPhonesMutation = useMutation({
     mutationFn: async (ids: number[]) => api.leads.enrichPhones({ leadIds: ids }),
-    onMutate: () => {
-      setIsEnrichDropdownOpen(false)
-    },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['leads', 'getMany'] })
 
@@ -164,12 +160,6 @@ export const LeadsList: FC = () => {
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900">Leads</h2>
           <div className="flex items-center gap-3">
-            {selectedLeads.length > 0 && (
-              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-md font-medium text-sm">
-                {selectedLeads.length} selected
-              </span>
-            )}
-            
             <button
               onClick={() => setIsImportModalOpen(true)}
               className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
@@ -178,101 +168,6 @@ export const LeadsList: FC = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
               </svg>
               Import CSV
-            </button>
-            
-            <div className="relative">
-              <button
-                onClick={() => selectedLeads.length > 0 && setIsEnrichDropdownOpen(!isEnrichDropdownOpen)}
-                disabled={selectedLeads.length === 0}
-                className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                <svg className="-ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                Enrich
-                <svg className="ml-2 -mr-1 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-
-              {isEnrichDropdownOpen && selectedLeads.length > 0 && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50 border border-gray-200">
-                  <div className="py-1">
-                    <button
-                      onClick={() => verifyEmailsMutation.mutate(selectedLeads)}
-                      disabled={verifyEmailsMutation.isPending}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      <div className="flex items-center">
-                        <svg className="mr-3 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                        </svg>
-                        Verify Email
-                      </div>
-                    </button>
-                    <button
-                      onClick={() => enrichPhonesMutation.mutate(selectedLeads)}
-                      disabled={enrichPhonesMutation.isPending}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      <div className="flex items-center">
-                        <svg className="mr-3 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                        </svg>
-                        Find Phone
-                      </div>
-                    </button>
-                    <button
-                      onClick={() => {
-                        toast.error('Gender guessing feature is not yet implemented')
-                        setIsEnrichDropdownOpen(false)
-                      }}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                    >
-                      <div className="flex items-center">
-                        <svg className="mr-3 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                        Guess Gender
-                      </div>
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <button
-              onClick={() => setIsMessageModalOpen(true)}
-              disabled={selectedLeads.length === 0}
-              className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              <svg className="-ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-              </svg>
-              Generate Messages
-            </button>
-
-            <button
-              onClick={handleDeleteSelected}
-              disabled={selectedLeads.length === 0 || deleteLeadsMutation.isPending}
-              className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {deleteLeadsMutation.isPending ? (
-                <>
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Deleting...
-                </>
-              ) : (
-                <>
-                  <svg className="-ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                  Delete
-                </>
-              )}
             </button>
           </div>
         </div>
@@ -309,6 +204,19 @@ export const LeadsList: FC = () => {
           </DataTable>
         )}
       </div>
+
+      <LeadsActionBar
+        selectedCount={selectedLeads.length}
+        onClearSelection={() => table.resetRowSelection(true)}
+        onVerifyEmails={() => verifyEmailsMutation.mutate(selectedLeads)}
+        onFindPhones={() => enrichPhonesMutation.mutate(selectedLeads)}
+        onGuessGender={() => toast.error('Gender guessing feature is not yet implemented')}
+        onGenerateMessages={() => setIsMessageModalOpen(true)}
+        onDelete={handleDeleteSelected}
+        isVerifyingEmails={verifyEmailsMutation.isPending}
+        isFindingPhones={enrichPhonesMutation.isPending}
+        isDeleting={deleteLeadsMutation.isPending}
+      />
 
       <MessageTemplateModal
         isOpen={isMessageModalOpen}

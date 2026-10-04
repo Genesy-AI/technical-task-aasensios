@@ -54,7 +54,6 @@ const renderLeadsList = () =>
 const selectAndVerify = async (checkboxIndex: number) => {
   await screen.findByText('jane.smith@example.com', { exact: false })
   fireEvent.click(screen.getAllByRole('checkbox')[checkboxIndex])
-  fireEvent.click(screen.getByRole('button', { name: /enrich/i }))
   fireEvent.click(screen.getByRole('button', { name: /verify email/i }))
 }
 const selectAllAndVerify = () => selectAndVerify(0)
@@ -80,7 +79,6 @@ describe('LeadsList email verification feedback', () => {
     await selectAllAndVerify()
 
     expect(await screen.findByText('Verifying 2 emails...')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: /enrich/i }))
     expect(screen.getByRole('button', { name: /verify email/i })).toBeDisabled()
 
     await act(async () => {
@@ -258,7 +256,6 @@ describe('LeadsList phone enrichment', () => {
 
     await screen.findByText('jane.smith@example.com', { exact: false })
     fireEvent.click(screen.getAllByRole('checkbox')[0])
-    fireEvent.click(screen.getByRole('button', { name: /enrich/i }))
     fireEvent.click(screen.getByRole('button', { name: /find phone/i }))
 
     await waitFor(() => expect(api.leads.enrichPhones).toHaveBeenCalledWith({ leadIds: [1, 2] }))
@@ -318,26 +315,37 @@ describe('LeadsList pagination', () => {
   })
 })
 
-describe('LeadsList message generation', () => {
+describe('LeadsList selection actions', () => {
   afterEach(() => {
     cleanup()
     vi.clearAllMocks()
   })
 
-  it('opens the template modal from its own button, not the Enrich menu', async () => {
+  it('shows the actions in a bar only while leads are selected', async () => {
     vi.mocked(api.leads.getMany).mockResolvedValue([makeLead(1, 'John', 'Doe'), makeLead(2, 'Jane', 'Smith')])
     renderLeadsList()
 
     await screen.findByText('jane.smith@example.com')
-    const generateButton = screen.getByRole('button', { name: /^generate messages$/i })
-    expect(generateButton).toBeDisabled()
+    expect(screen.queryByRole('button', { name: /generate messages/i })).not.toBeInTheDocument()
 
     fireEvent.click(screen.getAllByRole('checkbox')[1])
-    fireEvent.click(screen.getByRole('button', { name: /enrich/i }))
-    expect(screen.getByRole('button', { name: /verify email/i })).toBeInTheDocument()
-    expect(screen.getAllByRole('button', { name: /^generate messages$/i })).toHaveLength(1)
+    expect(await screen.findByText('1 selected')).toBeInTheDocument()
 
-    fireEvent.click(generateButton)
+    fireEvent.click(screen.getByRole('button', { name: /generate messages/i }))
     expect(await screen.findByText('Generate Messages for 1 Lead')).toBeInTheDocument()
+    // Opening an action keeps the selection, so the bar stays
+    expect(screen.getByText('1 selected')).toBeInTheDocument()
+  })
+
+  it('clears the selection from the bar', async () => {
+    vi.mocked(api.leads.getMany).mockResolvedValue([makeLead(1, 'John', 'Doe'), makeLead(2, 'Jane', 'Smith')])
+    renderLeadsList()
+
+    await screen.findByText('jane.smith@example.com')
+    fireEvent.click(screen.getAllByRole('checkbox')[1])
+    fireEvent.click(await screen.findByRole('button', { name: /clear selection/i }))
+
+    await waitFor(() => expect(screen.queryByText('1 selected')).not.toBeInTheDocument())
+    expect(screen.getAllByRole('checkbox')[1]).not.toBeChecked()
   })
 })
