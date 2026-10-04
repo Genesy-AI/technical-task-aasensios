@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./enginy_brand_filled.svg" width="256" height="128" alt="Enginy logo">
+  <img src="./frontend/public/enginy_brand_filled.svg" width="256" height="128" alt="Enginy logo">
 </p>
 
 ## Overview
