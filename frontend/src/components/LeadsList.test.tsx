@@ -290,7 +290,7 @@ describe('LeadsList pagination', () => {
 
   it('moves to the next page and stays there', async () => {
     vi.mocked(api.leads.getMany).mockResolvedValue(
-      Array.from({ length: 25 }, (_, index) => makeLead(index + 1, `Lead${index + 1}`, 'Test'))
+      Array.from({ length: 15 }, (_, index) => makeLead(index + 1, `Lead${index + 1}`, 'Test'))
     )
     // The URL-backed adapter, so page changes go through window.location like in the app
     render(
@@ -311,7 +311,7 @@ describe('LeadsList pagination', () => {
     expect(window.location.search).toContain('page=2')
     expect(screen.getAllByRole('checkbox', { name: /^select lead/i })).toHaveLength(5)
     // The short last page is padded to a full page so the pagination below does not move
-    expect(document.querySelectorAll('tbody tr')).toHaveLength(20)
+    expect(document.querySelectorAll('tbody tr')).toHaveLength(10)
   })
 })
 

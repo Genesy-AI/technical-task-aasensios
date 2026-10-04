@@ -160,7 +160,8 @@ export const getLeadsTableColumns = (
     accessorKey: 'email',
     header: ({ column }) => <DataTableColumnHeader column={column} label="Email" />,
     cell: ({ row }) => <div className="truncate">{row.original.email || '-'}</div>,
-    meta: { label: 'Email' },
+    meta: { label: 'Email', placeholder: 'Search emails...', variant: 'text' },
+    enableColumnFilter: true,
     size: 240,
   },
   {
@@ -185,7 +186,8 @@ export const getLeadsTableColumns = (
     accessorKey: 'jobTitle',
     header: ({ column }) => <DataTableColumnHeader column={column} label="Job Title" />,
     cell: ({ row }) => <div className="truncate">{row.original.jobTitle || '-'}</div>,
-    meta: { label: 'Job Title' },
+    meta: { label: 'Job Title', placeholder: 'Search job titles...', variant: 'text' },
+    enableColumnFilter: true,
     size: 180,
   },
   {
@@ -202,7 +204,8 @@ export const getLeadsTableColumns = (
     accessorKey: 'yearsAtCompany',
     header: ({ column }) => <DataTableColumnHeader column={column} label="Years at Company" />,
     cell: ({ row }) => row.original.yearsAtCompany ?? '-',
-    meta: { label: 'Years at Company' },
+    meta: { label: 'Years at Company', variant: 'number' },
+    enableColumnFilter: true,
     size: 170,
   },
   {

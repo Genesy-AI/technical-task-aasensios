@@ -4,7 +4,9 @@ import { FC, useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import { IconCloudUpload } from '@tabler/icons-react'
 import { DataTable } from '@/components/data-table/data-table'
-import { DataTableToolbar } from '@/components/data-table/data-table-toolbar'
+import { DataTableAdvancedToolbar } from '@/components/data-table/data-table-advanced-toolbar'
+import { DataTableFilterMenu } from '@/components/data-table/data-table-filter-menu'
+import { DataTableSortMenu } from '@/components/data-table/data-table-sort-menu'
 import { Button } from '@/components/ui/button'
 import { useDataTable } from '@/hooks/use-data-table'
 import { api } from '../api'
@@ -45,7 +47,7 @@ export const LeadsList: FC = () => {
     autoResetPageIndex: false,
     initialState: {
       sorting: [{ id: 'createdAt', desc: true }],
-      pagination: { pageIndex: 0, pageSize: 20 },
+      pagination: { pageIndex: 0, pageSize: 10 },
     },
   })
 
@@ -191,7 +193,10 @@ export const LeadsList: FC = () => {
           </div>
         ) : (
           <DataTable table={table}>
-            <DataTableToolbar table={table}>{importCsvButton}</DataTableToolbar>
+            <DataTableAdvancedToolbar table={table} actions={importCsvButton}>
+              <DataTableSortMenu table={table} align="start" />
+              <DataTableFilterMenu table={table} align="start" />
+            </DataTableAdvancedToolbar>
           </DataTable>
         )}
       </div>
