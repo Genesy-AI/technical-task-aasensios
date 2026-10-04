@@ -1,29 +1,44 @@
-import { FC, useState, useEffect, useCallback, useRef } from 'react'
+import { FC, useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { api } from '../api'
+import { LeadField, LeadFieldGroup } from '../api/types/leads/getFields'
+import { LeadsGetManyOutput } from '../api/types/leads/getMany'
+import { useLeadFields } from '../hooks/useLeadFields'
+import { findMissingFields, findUnknownFields, getAutocompleteMatch, renderPreview } from '../utils/messageTemplate'
+
+const GROUP_LABELS: Record<LeadFieldGroup, string> = {
+  contact: 'Contact',
+  company: 'Company',
+  social: 'Social',
+}
 
 interface MessageTemplateModalProps {
   isOpen: boolean
   onClose: () => void
-  selectedLeadIds: number[]
-  selectedLeadsCount: number
+  selectedLeads: LeadsGetManyOutput
 }
 
 export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
   isOpen,
   onClose,
-  selectedLeadIds,
-  selectedLeadsCount,
+  selectedLeads,
 }) => {
+  const selectedLeadIds = selectedLeads.map((lead) => lead.id)
+  const selectedLeadsCount = selectedLeads.length
   const [template, setTemplate] = useState('')
   const [generationResult, setGenerationResult] = useState<{
     success: boolean
     generatedCount: number
     errors: Array<{ leadId: number; leadName: string; error: string }>
   } | null>(null)
+  const [caret, setCaret] = useState(0)
+  const [activeSuggestion, setActiveSuggestion] = useState(0)
+  const [suggestionsDismissed, setSuggestionsDismissed] = useState(false)
+  const [isFieldPickerOpen, setIsFieldPickerOpen] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const leadFields = useLeadFields()
   const queryClient = useQueryClient()
 
   const generateMessagesMutation = useMutation({
@@ -106,22 +121,84 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
     }
   }, [isOpen, handleClose])
 
-  const availableFields = ['firstName', 'lastName', 'email', 'jobTitle', 'companyName', 'countryCode', 'phone']
+  const templatableFields = useMemo(
+    () => (leadFields.data ?? []).filter((field) => field.templatable),
+    [leadFields.data]
+  )
 
-  const insertField = (field: string) => {
-    if (textareaRef.current) {
-      const textarea = textareaRef.current
-      const start = textarea.selectionStart
-      const end = textarea.selectionEnd
-      const newTemplate = template.substring(0, start) + `{${field}}` + template.substring(end)
-      setTemplate(newTemplate)
+  const fieldGroups = useMemo(
+    () =>
+      (Object.keys(GROUP_LABELS) as LeadFieldGroup[])
+        .map((group) => ({ group, fields: templatableFields.filter((field) => field.group === group) }))
+        .filter(({ fields }) => fields.length > 0),
+    [templatableFields]
+  )
 
-      setTimeout(() => {
-        textarea.focus()
-        textarea.setSelectionRange(start + field.length + 2, start + field.length + 2)
-      }, 0)
+  const autocomplete = suggestionsDismissed ? null : getAutocompleteMatch(template, caret)
+  const suggestions = useMemo(() => {
+    if (!autocomplete) return []
+    const query = autocomplete.query.toLowerCase()
+    return templatableFields.filter(
+      (field) => field.key.toLowerCase().includes(query) || field.label.toLowerCase().includes(query)
+    )
+  }, [autocomplete, templatableFields])
+
+  const unknownFields = useMemo(
+    () => (leadFields.data ? findUnknownFields(template, leadFields.data) : []),
+    [template, leadFields.data]
+  )
+  const missingFields = useMemo(
+    () => (leadFields.data ? findMissingFields(template, selectedLeads, leadFields.data) : []),
+    [template, selectedLeads, leadFields.data]
+  )
+  const previewLead = selectedLeads[0]
+
+  const updateTemplate = (value: string, caretPosition: number) => {
+    setTemplate(value)
+    setCaret(caretPosition)
+    setActiveSuggestion(0)
+    setSuggestionsDismissed(false)
+  }
+
+  // Replaces [from, to) with the field placeholder and puts the caret right after it
+  const insertField = (field: LeadField, from: number, to: number) => {
+    const placeholder = `{${field.key}}`
+    const newTemplate = template.substring(0, from) + placeholder + template.substring(to)
+    const newCaret = from + placeholder.length
+    updateTemplate(newTemplate, newCaret)
+    setSuggestionsDismissed(true)
+
+    setTimeout(() => {
+      textareaRef.current?.focus()
+      textareaRef.current?.setSelectionRange(newCaret, newCaret)
+    }, 0)
+  }
+
+  const insertFromPicker = (field: LeadField) => {
+    const textarea = textareaRef.current
+    insertField(field, textarea?.selectionStart ?? template.length, textarea?.selectionEnd ?? template.length)
+    setIsFieldPickerOpen(false)
+  }
+
+  const handleTemplateKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (!autocomplete || suggestions.length === 0) return
+
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault()
+      const step = e.key === 'ArrowDown' ? 1 : -1
+      setActiveSuggestion((index) => (index + step + suggestions.length) % suggestions.length)
+    } else if (e.key === 'Enter' || e.key === 'Tab') {
+      e.preventDefault()
+      insertField(suggestions[activeSuggestion] ?? suggestions[0], autocomplete.start, caret)
+    } else if (e.key === 'Escape') {
+      // Close the suggestions, not the modal
+      e.preventDefault()
+      e.stopPropagation()
+      setSuggestionsDismissed(true)
     }
   }
+
+  const syncCaret = (e: React.SyntheticEvent<HTMLTextAreaElement>) => setCaret(e.currentTarget.selectionStart)
 
   if (!isOpen) return null
 
@@ -155,34 +232,139 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
               <label htmlFor="message-template" className="block text-sm font-medium text-gray-700 mb-2">
                 Message Template
               </label>
-              <div className="space-y-3">
-                <div className="flex flex-wrap gap-2">
-                  <span className="text-sm text-gray-600">Insert field:</span>
-                  {availableFields.map((field) => (
-                    <button
-                      key={field}
-                      type="button"
-                      onClick={() => insertField(field)}
-                      className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded hover:bg-blue-200 transition-colors"
+              <div className="relative">
+                <div
+                  className="absolute -top-8 right-0"
+                  // Close when focus leaves the picker (click outside, Tab away)
+                  onBlur={(e) => {
+                    if (!e.currentTarget.contains(e.relatedTarget)) setIsFieldPickerOpen(false)
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setIsFieldPickerOpen((open) => !open)}
+                    disabled={templatableFields.length === 0}
+                    aria-haspopup="menu"
+                    aria-expanded={isFieldPickerOpen}
+                    className="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-800 bg-blue-100 rounded hover:bg-blue-200 disabled:opacity-50 transition-colors"
+                  >
+                    Insert field
+                    <svg className="ml-1 h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {isFieldPickerOpen && (
+                    <div
+                      role="menu"
+                      className="absolute right-0 mt-1 w-56 max-h-72 overflow-y-auto bg-white rounded-md shadow-lg z-10 border border-gray-200 py-1"
                     >
-                      {`{${field}}`}
-                    </button>
-                  ))}
+                      {fieldGroups.map(({ group, fields }) => (
+                        <div key={group} role="group" aria-label={GROUP_LABELS[group]}>
+                          <div className="px-3 pt-2 pb-1 text-xs font-semibold text-gray-500 uppercase">
+                            {GROUP_LABELS[group]}
+                          </div>
+                          {fields.map((field) => (
+                            <button
+                              key={field.key}
+                              type="button"
+                              role="menuitem"
+                              onClick={() => insertFromPicker(field)}
+                              className="flex w-full items-center justify-between px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100"
+                            >
+                              {field.label}
+                              <span className="text-xs text-gray-400 font-mono">{`{${field.key}}`}</span>
+                            </button>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <textarea
                   ref={textareaRef}
                   id="message-template"
                   value={template}
-                  onChange={(e) => setTemplate(e.target.value)}
-                  placeholder="Enter your message template here. Use {fieldName} to insert dynamic values.&#10;&#10;Example: Hi {firstName}, I noticed you work at {companyName} as a {jobTitle}. Would you be interested in..."
+                  onChange={(e) => updateTemplate(e.target.value, e.target.selectionStart)}
+                  onKeyDown={handleTemplateKeyDown}
+                  onSelect={syncCaret}
+                  onClick={syncCaret}
+                  onBlur={() => setSuggestionsDismissed(true)}
+                  placeholder="Enter your message template here. Type { to insert a lead field.&#10;&#10;Example: Hi {firstName}, I noticed you work at {companyName} as a {jobTitle}. Would you be interested in..."
                   className="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                  role="combobox"
+                  aria-autocomplete="list"
+                  aria-expanded={suggestions.length > 0}
+                  aria-controls="field-suggestions"
+                  aria-activedescendant={suggestions.length > 0 ? `field-suggestion-${activeSuggestion}` : undefined}
                   required
                 />
+                {suggestions.length > 0 && (
+                  // Anchored under the textarea rather than at the caret: placing it at the caret needs a mirror element
+                  <ul
+                    id="field-suggestions"
+                    role="listbox"
+                    aria-label="Field suggestions"
+                    className="absolute left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white rounded-md shadow-lg z-10 border border-gray-200 py-1"
+                  >
+                    {suggestions.map((field, index) => (
+                      <li
+                        key={field.key}
+                        id={`field-suggestion-${index}`}
+                        role="option"
+                        aria-selected={index === activeSuggestion}
+                        // mousedown so the textarea doesn't blur (and close the list) before the click lands
+                        onMouseDown={(e) => {
+                          e.preventDefault()
+                          if (autocomplete) insertField(field, autocomplete.start, caret)
+                        }}
+                        onMouseEnter={() => setActiveSuggestion(index)}
+                        className={`flex items-center justify-between px-3 py-1.5 text-sm cursor-pointer ${
+                          index === activeSuggestion ? 'bg-blue-50 text-blue-900' : 'text-gray-700'
+                        }`}
+                      >
+                        {field.label}
+                        <span className="text-xs text-gray-400 font-mono">{`{${field.key}}`}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
+              {(unknownFields.length > 0 || missingFields.length > 0) && (
+                <ul className="mt-2 space-y-1 text-sm">
+                  {unknownFields.map((key) => (
+                    <li key={key} className="text-red-600">
+                      Unknown field {`{${key}}`}
+                    </li>
+                  ))}
+                  {missingFields.map(({ key, missing }) => (
+                    <li key={key} className="text-amber-700">
+                      ⚠ {`{${key}}`} is missing for {missing} of {selectedLeadsCount} lead{selectedLeadsCount !== 1 ? 's' : ''}
+                      {' '}— no message will be generated for {missing === 1 ? 'it' : 'them'}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {template.trim() && previewLead && (
+                <section aria-label="Preview" className="mt-3 rounded-md border border-gray-200 bg-gray-50 p-3">
+                  <h3 className="text-xs font-medium text-gray-500 mb-1">
+                    Preview — {`${previewLead.firstName} ${previewLead.lastName || ''}`.trim()}
+                  </h3>
+                  <p className="text-sm text-gray-900 whitespace-pre-wrap">
+                    {renderPreview(template, previewLead).map((segment, index) =>
+                      segment.missing ? (
+                        <mark key={index} className="bg-amber-100 text-amber-800 rounded px-0.5">
+                          {segment.text}
+                        </mark>
+                      ) : (
+                        <span key={index}>{segment.text}</span>
+                      )
+                    )}
+                  </p>
+                </section>
+              )}
               <p className="mt-2 text-sm text-gray-500">
-                Use curly braces around field names (e.g., {`{firstName}`}) to insert dynamic values. If a
-                field is missing for a lead, an error will be shown and no message will be generated for that
-                lead.
+                Type {`{`} or use Insert field to add lead data. Leads missing a field you use won't get a
+                message.
               </p>
             </div>
 
@@ -259,7 +441,7 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
               {(!generationResult || generationResult.errors.length > 0) && (
                 <button
                   type="submit"
-                  disabled={!template.trim() || generateMessagesMutation.isPending}
+                  disabled={!template.trim() || unknownFields.length > 0 || generateMessagesMutation.isPending}
                   className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   {generateMessagesMutation.isPending ? (

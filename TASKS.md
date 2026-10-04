@@ -9,7 +9,7 @@
   - Temporal workflow: Orion → Astra → Nimbus, stop early, per-activity timeout + retries, idempotent per lead.
   - Provider abstraction layer (different inputs/outputs); handle Orion's missing `companyWebsite`.
   - Frontend progress feedback.
-- [ ] Feature: Remaining lead fields (years in role, LinkedIn) + scalable message composition.
+- [x] Feature: Remaining lead fields (years at company, LinkedIn) + scalable message composition.
   - `yearsAtCompany` (per README; CSV import also accepts the sample files' `yearsInRole` header, a semantic mismatch to document) and `linkedinUrl` with URL validation.
   - Single field registry instead of the hardcoded field lists; migrate phone onto it.
   - Message composition UX that scales as fields grow.
