@@ -249,10 +249,11 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
       onClick={handleBackdropClick}
     >
       <div
-        className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+        // Fixed height so the preview, warnings and results appearing don't resize the modal
+        className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 h-[min(90vh,36rem)] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-6">
+        <div className="p-6 flex flex-col flex-1 min-h-0">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-semibold text-gray-900">
               Generate Messages for {selectedLeadsCount} Lead{selectedLeadsCount !== 1 ? 's' : ''}
@@ -268,7 +269,9 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+            {/* Pads the scroll area so focus rings aren't clipped */}
+            <div className="flex-1 min-h-0 overflow-y-auto space-y-6 -mx-1 px-1">
             <div>
               <label htmlFor="message-template" className="block text-sm font-medium text-gray-700 mb-2">
                 Message Template
@@ -512,7 +515,9 @@ export const MessageTemplateModal: FC<MessageTemplateModalProps> = ({
               </div>
             )}
 
-            <div className="flex justify-end space-x-3">
+            </div>
+
+            <div className="flex justify-end space-x-3 pt-6">
               <button
                 type="button"
                 onClick={handleClose}
