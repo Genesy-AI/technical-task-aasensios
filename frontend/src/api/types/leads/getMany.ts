@@ -1,5 +1,9 @@
 export type LeadsGetManyInput = undefined
 
+export type PhoneSource = 'csv' | 'orion' | 'astra' | 'nimbus'
+
+export type PhoneEnrichmentStatus = 'pending' | 'running' | 'found' | 'not_found' | 'failed'
+
 export type LeadsGetManyOutput = {
   id: number
   createdAt: string
@@ -12,4 +16,7 @@ export type LeadsGetManyOutput = {
   companyName: string | null
   message: string | null
   emailVerified: boolean | null
+  phone: string | null
+  phoneSource: PhoneSource | null
+  phoneEnrichmentStatus: PhoneEnrichmentStatus | null
 }[]

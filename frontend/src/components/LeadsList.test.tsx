@@ -12,6 +12,7 @@ vi.mock('../api', () => ({
       getMany: vi.fn(),
       deleteMany: vi.fn(),
       verifyEmails: vi.fn(),
+      enrichPhones: vi.fn(),
     },
   },
 }))
@@ -28,6 +29,9 @@ const makeLead = (id: number, firstName: string, lastName: string) => ({
   companyName: null,
   message: null,
   emailVerified: null,
+  phone: null,
+  phoneSource: null,
+  phoneEnrichmentStatus: null,
 })
 
 const renderLeadsList = () =>
@@ -140,5 +144,64 @@ describe('LeadsList email verification feedback', () => {
     expect(screen.queryByText(successToast)).not.toBeInTheDocument()
     // Dismissed toasts stay mounted briefly for their exit animation
     await waitFor(() => expect(screen.queryByText(/^Verifying/)).not.toBeInTheDocument(), { timeout: 2000 })
+  })
+})
+
+describe('LeadsList phone enrichment', () => {
+  afterEach(() => {
+    act(() => toast.remove())
+    cleanup()
+    vi.clearAllMocks()
+  })
+
+  it('shows the phone with its source, or the enrichment status', async () => {
+    vi.mocked(api.leads.getMany).mockResolvedValue([
+      { ...makeLead(1, 'John', 'Doe'), phone: '8577732848', phoneSource: 'orion', phoneEnrichmentStatus: 'found' },
+      { ...makeLead(2, 'Jane', 'Smith'), phone: '+1-280-754-0462', phoneSource: 'csv' },
+      { ...makeLead(3, 'Ann', 'Lee'), phoneEnrichmentStatus: 'not_found' },
+      { ...makeLead(4, 'Bob', 'Ray'), phoneEnrichmentStatus: 'failed' },
+      { ...makeLead(5, 'Eve', 'Fox') },
+    ])
+    renderLeadsList()
+
+    expect(await screen.findByText('8577732848')).toBeInTheDocument()
+    expect(screen.getByText('via Orion Connect')).toBeInTheDocument()
+    expect(screen.getByText('+1-280-754-0462')).toBeInTheDocument()
+    expect(screen.getByText('via CSV import')).toBeInTheDocument()
+    expect(screen.getByText('No data found')).toBeInTheDocument()
+    expect(screen.getByText('Search failed')).toBeInTheDocument()
+  })
+
+  it('starts the search for the selected leads and summarizes what happened', async () => {
+    vi.mocked(api.leads.getMany).mockResolvedValue([makeLead(1, 'John', 'Doe'), makeLead(2, 'Jane', 'Smith')])
+    vi.mocked(api.leads.enrichPhones).mockResolvedValue({
+      success: true,
+      started: [1],
+      skipped: [2],
+      alreadyRunning: [],
+      errors: [],
+    })
+    renderLeadsList()
+
+    await screen.findByText('jane.smith@example.com', { exact: false })
+    fireEvent.click(screen.getAllByRole('checkbox')[0])
+    fireEvent.click(screen.getByRole('button', { name: /enrich/i }))
+    fireEvent.click(screen.getByRole('button', { name: /find phone/i }))
+
+    await waitFor(() => expect(api.leads.enrichPhones).toHaveBeenCalledWith({ leadIds: [1, 2] }))
+    expect(await screen.findByText('Searching phone for 1 lead')).toBeInTheDocument()
+    expect(screen.getByText('1 lead already has a phone')).toBeInTheDocument()
+  })
+
+  it('refreshes the table until the search finishes', async () => {
+    vi.mocked(api.leads.getMany)
+      .mockResolvedValueOnce([{ ...makeLead(1, 'John', 'Doe'), phoneEnrichmentStatus: 'running' }])
+      .mockResolvedValue([
+        { ...makeLead(1, 'John', 'Doe'), phone: '2630110166', phoneSource: 'astra', phoneEnrichmentStatus: 'found' },
+      ])
+    renderLeadsList()
+
+    expect(await screen.findByText('Searching…')).toBeInTheDocument()
+    expect(await screen.findByText('2630110166', {}, { timeout: 4000 })).toBeInTheDocument()
   })
 })

@@ -3,7 +3,7 @@
 - [x] PR Review: Review an open pull request from a teammate.
 - [x] Bug fix: Email verification hangs indefinitely with no feedback.
 - [x] Bug fix: CSV import displays invalid country codes.
-- [ ] Feature: Phone number field + enrich phone workflow using Temporal.
+- [x] Feature: Phone number field + enrich phone workflow using Temporal.
   - Phone number field (DB, CSV import, leads table, message composition), stored as received.
   - Enrichment status/source tracking; decide skip vs overwrite when a phone was already imported.
   - Temporal workflow: Orion → Astra → Nimbus, stop early, per-activity timeout + retries, idempotent per lead.

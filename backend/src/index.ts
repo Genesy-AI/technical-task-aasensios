@@ -1,12 +1,12 @@
-import { PrismaClient } from '@prisma/client'
 import express, { Request, Response } from 'express'
-import { Connection, Client } from '@temporalio/client'
-import { verifyEmailWorkflow } from './workflows'
+import { Connection, Client, WorkflowExecutionAlreadyStartedError } from '@temporalio/client'
+import { prisma } from './db'
+import { enrichPhoneWorkflow, verifyEmailWorkflow } from './workflows'
 import { generateMessageFromTemplate } from './utils/messageGenerator'
 import { verifyLeadEmails } from './utils/emailVerifier'
+import { startPhoneEnrichment } from './utils/phoneEnrichmentStarter'
 import { normalizeCountryCode } from './utils/countryCodes'
 import { runTemporalWorker } from './worker'
-const prisma = new PrismaClient()
 const app = express()
 app.use(express.json())
 
@@ -224,6 +224,7 @@ app.post('/leads/bulk', async (req: Request, res: Response) => {
 
     for (const lead of uniqueLeads) {
       const { countryCode, dropped } = normalizeCountryCode(lead.countryCode)
+      const phone = typeof lead.phone === 'string' && lead.phone.trim() ? lead.phone.trim() : null
       try {
         await prisma.lead.create({
           data: {
@@ -233,6 +234,7 @@ app.post('/leads/bulk', async (req: Request, res: Response) => {
             jobTitle: lead.jobTitle ? lead.jobTitle.trim() : null,
             countryCode,
             companyName: lead.companyName ? lead.companyName.trim() : null,
+            ...(phone && { phone, phoneSource: 'csv' }),
           },
         })
         importedCount++
@@ -306,6 +308,61 @@ app.post('/leads/verify-emails', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error verifying emails:', error)
     res.status(500).json({ error: 'Failed to verify emails' })
+  }
+})
+
+app.post('/leads/enrich-phone', async (req: Request, res: Response) => {
+  if (!req.body || typeof req.body !== 'object') {
+    return res.status(400).json({ error: 'Request body is required and must be valid JSON' })
+  }
+
+  const { leadIds } = req.body as { leadIds?: number[] }
+
+  if (!Array.isArray(leadIds) || leadIds.length === 0) {
+    return res.status(400).json({ error: 'leadIds must be a non-empty array' })
+  }
+
+  try {
+    const leads = await prisma.lead.findMany({
+      where: { id: { in: leadIds.map((id) => Number(id)) } },
+    })
+
+    if (leads.length === 0) {
+      return res.status(404).json({ error: 'No leads found with the provided IDs' })
+    }
+
+    const connection = await Connection.connect({ address: 'localhost:7233' })
+    try {
+      const client = new Client({ connection, namespace: 'default' })
+
+      const outcome = await startPhoneEnrichment(leads, {
+        // Fixed per-lead ID: Temporal rejects a second start while one is running
+        start: (leadId) =>
+          client.workflow.start(enrichPhoneWorkflow, {
+            taskQueue: 'myQueue',
+            workflowId: `enrich-phone-${leadId}`,
+            args: [leadId],
+          }),
+        isAlreadyStarted: (error) => error instanceof WorkflowExecutionAlreadyStartedError,
+        markPending: (leadId) =>
+          prisma.lead.updateMany({
+            where: {
+              id: leadId,
+              OR: [{ phoneEnrichmentStatus: null }, { phoneEnrichmentStatus: { notIn: ['pending', 'running'] } }],
+            },
+            data: { phoneEnrichmentStatus: 'pending' },
+          }),
+        markFailed: (leadId) =>
+          prisma.lead.update({ where: { id: leadId }, data: { phoneEnrichmentStatus: 'failed' } }),
+      })
+
+      res.json({ success: true, ...outcome })
+    } finally {
+      await connection.close()
+    }
+  } catch (error) {
+    console.error('Error enriching phones:', error)
+    res.status(500).json({ error: 'Failed to start phone enrichment' })
   }
 })
 

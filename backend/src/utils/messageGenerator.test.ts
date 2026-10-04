@@ -52,6 +52,11 @@ describe('generateMessageFromTemplate', () => {
       )
     })
 
+    it('should replace the phone field', () => {
+      const result = generateMessageFromTemplate('Can I call you at {phone}?', { ...fullLead, phone: '8577732848' })
+      expect(result).toBe('Can I call you at 8577732848?')
+    })
+
     it('should handle template with no field placeholders', () => {
       const template = 'This is a static message with no placeholders.'
       const result = generateMessageFromTemplate(template, fullLead)

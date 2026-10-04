@@ -89,6 +89,17 @@ John,Doe,john.doe@example.com,Developer,US,Tech Corp`
     })
   })
 
+  it('should read the phone from a phoneNumber or phone column', () => {
+    const fromPhoneNumber = parseCsv('firstName,lastName,email,phoneNumber\nAda,Lovelace,ada@example.com, +1-280-754-0462x2154 ')
+    expect(fromPhoneNumber[0].phone).toBe('+1-280-754-0462x2154')
+
+    const fromPhone = parseCsv('firstName,lastName,email,phone\nAda,Lovelace,ada@example.com,8577732848')
+    expect(fromPhone[0].phone).toBe('8577732848')
+
+    const empty = parseCsv('firstName,lastName,email,phoneNumber\nAda,Lovelace,ada@example.com,')
+    expect(empty[0].phone).toBeUndefined()
+  })
+
   it('should handle missing required fields and mark as invalid', () => {
     const csv = `firstName,lastName,email
 ,Smith,john@example.com

@@ -11,6 +11,9 @@ importers:
       '@prisma/client':
         specifier: ^6.15.0
         version: 6.15.0(prisma@6.15.0(typescript@5.9.2))(typescript@5.9.2)
+      '@temporalio/activity':
+        specifier: 1.13.0
+        version: 1.13.0
       '@temporalio/client':
         specifier: ^1.13.0
         version: 1.13.0
@@ -24,9 +27,6 @@ importers:
         specifier: ^5.1.0
         version: 5.1.0(supports-color@5.5.0)
     devDependencies:
-      '@temporalio/activity':
-        specifier: 1.13.0
-        version: 1.13.0
       '@temporalio/testing':
         specifier: 1.13.0
         version: 1.13.0(esbuild@0.28.2)

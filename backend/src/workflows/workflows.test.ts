@@ -51,6 +51,7 @@ describe('verifyEmailWorkflow', () => {
   it('fails after a bounded number of attempts when the provider never responds', async () => {
     let attempts = 0
     const hangingActivities: typeof activities = {
+      ...activities,
       verifyEmail: async () => {
         attempts += 1
         // Sleep until the worker cancels the timed-out attempt

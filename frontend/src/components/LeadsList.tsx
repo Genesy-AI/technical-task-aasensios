@@ -2,8 +2,58 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { FC, useState } from 'react'
 import toast from 'react-hot-toast'
 import { api } from '../api'
+import { LeadsGetManyOutput, PhoneSource } from '../api/types/leads/getMany'
 import { MessageTemplateModal } from './MessageTemplateModal'
 import { CsvImportModal } from './CsvImportModal'
+
+const PHONE_SOURCE_LABELS: Record<PhoneSource, string> = {
+  csv: 'CSV import',
+  orion: 'Orion Connect',
+  astra: 'Astra Dialer',
+  nimbus: 'Nimbus Lookup',
+}
+
+const PHONE_POLL_INTERVAL_MS = 2000
+
+const isPhoneSearchInProgress = (lead: LeadsGetManyOutput[number]) =>
+  lead.phoneEnrichmentStatus === 'pending' || lead.phoneEnrichmentStatus === 'running'
+
+const pluralizeLeads = (count: number) => (count === 1 ? '1 lead' : `${count} leads`)
+
+const PhoneCell: FC<{ lead: LeadsGetManyOutput[number] }> = ({ lead }) => {
+  if (lead.phone) {
+    return (
+      <>
+        <div className="text-sm text-gray-900">{lead.phone}</div>
+        {lead.phoneSource && (
+          <div className="text-xs text-gray-500">via {PHONE_SOURCE_LABELS[lead.phoneSource] ?? lead.phoneSource}</div>
+        )}
+      </>
+    )
+  }
+
+  if (isPhoneSearchInProgress(lead)) {
+    return (
+      <span className="inline-flex items-center text-sm text-gray-500">
+        <svg className="animate-spin mr-2 h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+        Searching…
+      </span>
+    )
+  }
+
+  if (lead.phoneEnrichmentStatus === 'not_found') {
+    return <span className="text-sm text-gray-500">No data found</span>
+  }
+
+  if (lead.phoneEnrichmentStatus === 'failed') {
+    return <span className="text-sm text-red-600">Search failed</span>
+  }
+
+  return <span className="text-sm text-gray-900">-</span>
+}
 
 export const LeadsList: FC = () => {
   const [selectedLeads, setSelectedLeads] = useState<number[]>([])
@@ -16,6 +66,9 @@ export const LeadsList: FC = () => {
     queryKey: ['leads', 'getMany'],
     queryFn: async () => api.leads.getMany(),
     retry: false,
+    // Phone searches run in the background; poll only while one is in progress
+    refetchInterval: (query) =>
+      query.state.data?.some(isPhoneSearchInProgress) ? PHONE_POLL_INTERVAL_MS : false,
   })
   
 
@@ -68,6 +121,37 @@ export const LeadsList: FC = () => {
     },
     onError: () => {
       toast.error('Failed to verify emails. Please try again.', { id: 'verify-emails' })
+    }
+  })
+
+  const enrichPhonesMutation = useMutation({
+    mutationFn: async (ids: number[]) => api.leads.enrichPhones({ leadIds: ids }),
+    onMutate: () => {
+      setIsEnrichDropdownOpen(false)
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['leads', 'getMany'] })
+
+      if (data.started.length > 0) {
+        toast.success(`Searching phone for ${pluralizeLeads(data.started.length)}`)
+      }
+      if (data.alreadyRunning.length > 0) {
+        toast(`Phone search already in progress for ${pluralizeLeads(data.alreadyRunning.length)}`)
+      }
+      if (data.skipped.length > 0) {
+        toast(
+          data.skipped.length === 1
+            ? '1 lead already has a phone'
+            : `${data.skipped.length} leads already have a phone`
+        )
+      }
+      if (data.errors.length > 0) {
+        const names = data.errors.map(error => error.leadName).join(', ')
+        toast.error(`Could not start phone search for: ${names}`)
+      }
+    },
+    onError: () => {
+      toast.error('Failed to start phone search. Please try again.')
     }
   })
 
@@ -180,6 +264,18 @@ export const LeadsList: FC = () => {
                       </div>
                     </button>
                     <button
+                      onClick={() => enrichPhonesMutation.mutate(selectedLeads)}
+                      disabled={enrichPhonesMutation.isPending}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <div className="flex items-center">
+                        <svg className="mr-3 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                        </svg>
+                        Find Phone
+                      </div>
+                    </button>
+                    <button
                       onClick={() => {
                         toast.error('Gender guessing feature is not yet implemented')
                         setIsEnrichDropdownOpen(false)
@@ -247,6 +343,9 @@ export const LeadsList: FC = () => {
                   Email
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
+                  Phone
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
                   Job Title
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
@@ -286,6 +385,9 @@ export const LeadsList: FC = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">{lead.email || '-'} {lead.emailVerified === null ? '❓' : lead.emailVerified ? '✅' : '❌'}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <PhoneCell lead={lead} />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">{lead.jobTitle || '-'}</div>
